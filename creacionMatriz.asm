@@ -1,4 +1,3 @@
-global  main
 extern  printf
 extern puts
 
@@ -41,14 +40,6 @@ extern puts
 section  .data
 ; cada elemento es de 8 bytes. -1 es si es invalido , 0 si la celda esta vacio, 2 si hay una oca, 1 si esta el zorro
 
-    tablero dq  -1,-1,2,2,2,-1,-1
-            dq  -1,-1,2,2,2,-1,-1
-            dq   2,2,2,2,2,2,2
-			dq   2,0,0,0,0,0,2
-			dq	 2,0,0,1,0,0,2
-			dq	-1,-1,0,0,0,-1,-1
-			dq	-1,-1,0,0,0,-1,-1
-
     numeroString         db  '%li', 0
     cantFilas            dq 7
     cantColumnas         dq 7
@@ -73,11 +64,7 @@ section  .data
 section  .bss
 
 section  .text
-main:
-    mostrarString techoPiso; mostramos techo
-    jmp recorrerMatriz
-    jmp fin
-    
+
 recorrerMatriz:
     mostrarString pared; mostramos una pared antes de mostrar un elemento
 
@@ -97,7 +84,6 @@ siguienteFila:
     je fin; si fila > 7, damos por finalizada la matriz
     jmp recorrerMatriz
 
-fin:
-    mostrarString techoPiso
-    ret
+
+
     
