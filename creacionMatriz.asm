@@ -81,9 +81,12 @@ siguienteFila:
     mov qword[columnaActual], 1; reiniciamos columnas
     add qword[filaActual], 1; aumentamos en uno la fila
     cmp qword[filaActual], 8
-    je fin; si fila > 7, damos por finalizada la matriz
+    je finLoop; si fila > 7, damos por finalizada la matriz
     jmp recorrerMatriz
 
+finLoop:
+    mostrarString techoPiso
+    jmp solicitarAccion
 
 
     
