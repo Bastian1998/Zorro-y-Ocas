@@ -2,64 +2,102 @@ global  main
 extern  printf
 extern puts
 
-%macro mostrar_elemento 1
-    mov     rdi,%1
-    sub     rsp,8
-    call    puts
-    add     rsp,8
+%macro mostrarString 1
+    mov rdi, %1 ;cargo el string
+    sub rsp,8 
+    call printf
+    add rsp,8
 %endmacro
 
+%macro mostrarElemento 2
+    ; %1: Fila actual, %2: Columna actual
+
+    mostrarString simboloEspacio ;muestro un espacio en blanco para hacer mas clean el tablero
+
+    mov     rax, [%1]              ; Cargar fila en rax
+    mov     rcx, qword[longFila]   ; Cargar longitud de la fila
+    dec     rax                    ; Convertir a índice base 0
+    imul    rax, rcx               ; rax = fila * longFila
+
+    mov     rbx, [%2]              ; Cargar columna en rbx
+    mov     r8, qword[longElemento]; Cargar longitud del elemento
+    dec     rbx                    ; Convertir a índice base 0
+    imul    rbx, r8                ; rbx = columna * longElemento
+
+    add     rax, rbx               ; rax = rax + rbx, posición total en el tablero
+    mov     rdx, qword[tablero + rax] ; Cargar el valor desde tablero[rax]
+
+    inc rdx ;sumo 1 para acomodar para buscar el string
+    imul rdx, 2; multiplico por 2 (lo que pesa cada string, 2 bytes)
+
+    lea rdx , qword[simboloCeldaInvalida + rdx]; copio la direccion de memoria del string correspondiente dependiendo de el elemento 
+    mostrarString rdx ; Mostrar el número
+
+    mostrarString simboloEspacio ;muestro un espacio en blanco para hacer mas clean el tablero
+
+%endmacro
+
+
 section  .data
-; cada elemento es de 2 bytes. ' ' es si es invalido , 'V' si la celda esta vacio, O  si hay una ocas, X si esta el zorro
-    tablero         dw  ' ', ' ', 'O', 'O', 'O', ' ', ' '   
-                    dw  ' ', ' ', 'O', 'O', 'O', ' ', ' '
-                    dw  'O', 'O', 'O', 'O', 'O', 'O', 'O' 
-                    dw  'O', 'V', 'V', 'V', 'V', 'V', 'O'
-                    dw  'O', 'V', 'V', 'X', 'V', 'V', 'O'
-                    dw  ' ', ' ', 'V', 'V', 'V', ' ', ' ' 
-                    dw  ' ', ' ', 'V', 'V', 'V', ' ', ' ' 
-    mensaje             db  'PrintACA',0
-    cantFilas           dq 7
-    cantColumnas        dq 7
-    longElemento        dq 2
-    fila_actual         dq 1
-    columna_actual      dq 1
+; cada elemento es de 8 bytes. -1 es si es invalido , 0 si la celda esta vacio, 2 si hay una oca, 1 si esta el zorro
+
+    tablero dq  -1,-1,2,2,2,-1,-1
+            dq  -1,-1,2,2,2,-1,-1
+            dq   2,2,2,2,2,2,2
+			dq   2,0,0,0,0,0,2
+			dq	 2,0,0,1,0,0,2
+			dq	-1,-1,0,0,0,-1,-1
+			dq	-1,-1,0,0,0,-1,-1
+
+    numeroString         db  '%li', 0
+    cantFilas            dq 7
+    cantColumnas         dq 7
+    longElemento         dq 8
+    columnaActual        dq 1
+    filaActual           dq 1
+    longFila             dq 56
+    simboloEspacio       db ' ',0
+
+    ;estan definidas en este orden en especifco con una razon
+    simboloCeldaInvalida db '-',0 
+    simboloCeldaVacia    db ' ', 0
+    simboloZorro         db 'Z', 0
+    simboloOca           db 'O', 0
+
+    ;simbolos auxiliares para dibujar el tablero
+    pared                db '|', 0
+    techoPiso            db '------------------------------', 10, 0
+    saltoDeLinea         db 10, 0
+
                                    
 section  .bss
 
 section  .text
 main:
-    jmp     mostrar_elemento_i_j
+    mostrarString techoPiso; mostramos techo
+    jmp recorrerMatriz
+    jmp fin
     
-mostrar_elemento_i_j:
-    mov rax, [fila_actual]; movemos la fila actual
-    mov rbx, [columna_actual]; movemos la columna actual
-    mov rcx, tablero; movemos la direccion donde arranca la matriz (tablero)
-    mov rdx, 2; muevo la longitud del elemento
-    imul rdx, 7; Aca guardamos longitud de la fila 
-    dec rax ; i -1
-    imul rax, rdx; (i -1)*longitud de fila
-    dec rbx; (j - 1)
-    imul rbx, [longElemento]; (j -1)* longitud elemento
-    add rax, rbx; RAX la posicion de (i, j)
-    ;llega
-    add rcx, rax; tablero + (i -1)*longitud de fila + (j -1)* longitud elemento
-    mov r8, [rcx]
-    ;no llega
-    mostrar_elemento r8; llamo a la macros
-    inc qword[columna_actual]; aumento la J
-    cmp qword[columna_actual],8; si termine de mostrar la FILA entera
-    je  siguiente_fila; paso a la siguiente
-    jmp mostrar_elemento_i_j; vuelvo al LOOP
+recorrerMatriz:
+    mostrarString pared; mostramos una pared antes de mostrar un elemento
 
-siguiente_fila:
-    mov qword[columna_actual], 0; reinicio las columnas
-    inc qword[fila_actual]; aumento la fila
-    mostrar_elemento 10; muestro un salto de linea
-    cmp qword[fila_actual], 8; me fijo se terminaron las FILAS
-    je fin; termino el programa
-    jmp  mostrar_elemento_i_j; vuelvo al loop
+    mostrarElemento filaActual, columnaActual; mostramos el elemento i,j
 
+    inc qword[columnaActual]; incrementamos en 1 la columna
+    cmp qword[columnaActual], 8
+    je siguienteFila ; si la columna es <7
+    jmp recorrerMatriz; saltamos a la siguiente fila
+
+siguienteFila:
+    mostrarString pared; mostramos pared al finalizar una linea
+    mostrarString saltoDeLinea; saltamos de linea
+    mov qword[columnaActual], 1; reiniciamos columnas
+    add qword[filaActual], 1; aumentamos en uno la fila
+    cmp qword[filaActual], 8
+    je fin; si fila > 7, damos por finalizada la matriz
+    jmp recorrerMatriz
 
 fin:
+    mostrarString techoPiso
     ret
+    
