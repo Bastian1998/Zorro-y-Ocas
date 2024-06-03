@@ -1,8 +1,17 @@
 extern  printf
 extern puts
 
+
 %macro mostrarString 1
     mov rdi, %1 ;cargo el string
+    sub rsp,8 
+    call printf
+    add rsp,8
+%endmacro
+
+%macro mostrarNumero 1
+    mov rdi, numeroString ;cargo el string
+    mov rsi, %1
     sub rsp,8 
     call printf
     add rsp,8
@@ -40,7 +49,7 @@ extern puts
 section  .data
 ; cada elemento es de 8 bytes. -1 es si es invalido , 0 si la celda esta vacio, 2 si hay una oca, 1 si esta el zorro
 
-    numeroString         db  '%li', 0
+    numeroString         db  '%li ', 0
     cantFilas            dq 7
     cantColumnas         dq 7
     longElemento         dq 8
@@ -57,7 +66,8 @@ section  .data
 
     ;simbolos auxiliares para dibujar el tablero
     pared                db '|', 0
-    techoPiso            db '------------------------------', 10, 0
+    techoPiso            db '  ------------------------------', 10, 0
+    columnasString db '    1   2   3   4   5   6   7', 10, 0
     saltoDeLinea         db 10, 0
 
                                    
@@ -69,6 +79,7 @@ section  .text
 recorrerMatriz:
     mov qword[filaActual], 1
     mov qword[columnaActual], 1
+    mostrarNumero [filaActual]
     jmp recorrerFilas
 
 recorrerFilas:
@@ -88,6 +99,7 @@ siguienteFila:
     add qword[filaActual], 1; aumentamos en uno la fila
     cmp qword[filaActual], 8
     je finLoop; si fila > 7, damos por finalizada la matriz
+    mostrarNumero [filaActual]
     jmp recorrerFilas
 
 finLoop:
