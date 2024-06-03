@@ -65,7 +65,13 @@ section  .bss
 
 section  .text
 
+
 recorrerMatriz:
+    mov qword[filaActual], 1
+    mov qword[columnaActual], 1
+    jmp recorrerFilas
+
+recorrerFilas:
     mostrarString pared; mostramos una pared antes de mostrar un elemento
 
     mostrarElemento filaActual, columnaActual; mostramos el elemento i,j
@@ -73,7 +79,7 @@ recorrerMatriz:
     inc qword[columnaActual]; incrementamos en 1 la columna
     cmp qword[columnaActual], 8
     je siguienteFila ; si la columna es <7
-    jmp recorrerMatriz; saltamos a la siguiente fila
+    jmp recorrerFilas; saltamos a la siguiente fila
 
 siguienteFila:
     mostrarString pared; mostramos pared al finalizar una linea
@@ -82,11 +88,10 @@ siguienteFila:
     add qword[filaActual], 1; aumentamos en uno la fila
     cmp qword[filaActual], 8
     je finLoop; si fila > 7, damos por finalizada la matriz
-    jmp recorrerMatriz
+    jmp recorrerFilas
 
 finLoop:
-    mostrarString techoPiso
-    jmp solicitarAccion
+    ret
 
 
     
