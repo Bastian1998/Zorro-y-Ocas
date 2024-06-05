@@ -1,9 +1,10 @@
 global  main
 %include 'mostrarTablero.asm'
 %include 'movimientosEnElTablero.asm'
+%include 'archivoMatriz.asm'   
 extern  gets
 extern  sscanf      
-extern system     
+extern system  
 
 
 %macro mostrarNumeroDebug 1
@@ -49,6 +50,11 @@ main:
     add rsp, 8
 
     jmp main
+
+    sub rsp, 8
+    call guardarArchivo
+    add rsp, 8
+
     ret
     
 
