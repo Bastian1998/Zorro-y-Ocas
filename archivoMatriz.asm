@@ -37,12 +37,6 @@ section  .data
 ; cada elemento es de 8 bytes. -1 es si es invalido , 0 si la celda esta vacio, 2 si hay una oca, 1 si esta el zorro
 
     formato    		db '%d ', 0
-    ; cantFilas       dq 7
-    ; cantColumnas    dq 7
-    ; longElemento    dq 8
-    columnaActualArc   dq 1
-    filaActualArc      dq 1
-    ; longFila        dq 56
     
     fileName		db	"partidaGuardada.txt", 0
 	mode		    db	"w+", 0
@@ -71,16 +65,16 @@ guardarArchivo:
 
 archivoAbierto:
     mov [fileHandle], rax
-    mov qword[filaActualArc], 1
-    mov qword[columnaActualArc], 1
+    mov qword[filaActual], 1
+    mov qword[columnaActual], 1
 	jmp filasArc
 
 
 filasArc:
-    escribirElemento filaActualArc, columnaActualArc ; mostramos el elemento i,j
+    escribirElemento filaActual, columnaActual ; mostramos el elemento i,j
 
-    inc qword[columnaActualArc]; incrementamos en 1 la columna
-    cmp qword[columnaActualArc], 8
+    inc qword[columnaActual]; incrementamos en 1 la columna
+    cmp qword[columnaActual], 8
     je proximaFila ; si la columna es <7; saltamos a la siguiente fila
     jmp filasArc
 
@@ -89,9 +83,9 @@ proximaFila:
     mov rsi, [fileHandle]
     call fputs
 
-    mov qword[columnaActualArc], 1; reiniciamos columnas
-    add qword[filaActualArc], 1; aumentamos en uno la fila
-    cmp qword[filaActualArc], 8
+    mov qword[columnaActual], 1; reiniciamos columnas
+    add qword[filaActual], 1; aumentamos en uno la fila
+    cmp qword[filaActual], 8
     je fin; si fila > 7, damos por finalizada la matriz
     jmp filasArc
 
