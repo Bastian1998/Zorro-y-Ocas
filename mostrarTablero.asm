@@ -38,7 +38,6 @@ extern puts
     add     rax, rbx               ; rax = rax + rbx, posición total en el tablero
     mov     rdx, qword[tablero + rax] ; Cargar el valor desde tablero[rax]
 
-    inc rdx ;sumo 1 para acomodar para buscar el string
     imul rdx, 2; multiplico por 2 (lo que pesa cada string, 2 bytes)
 
     lea rdx , qword[simboloCeldaInvalida + rdx]; copio la direccion de memoria del string correspondiente dependiendo de el elemento 
@@ -62,15 +61,18 @@ section  .data
     simboloEspacio       db ' ',0
 
     ;estan definidas en este orden en especifco con una razon
-    simboloCeldaInvalida db '-',0 
-    simboloCeldaVacia    db ' ', 0
-    simboloZorro         db 'Z', 0
-    simboloOca           db 'O', 0
+    simboloCeldaInvalida      db '-',0 
+    simboloCeldaVacia         db ' ', 0
+    simboloZorro              db 'Z', 0
+    simboloOca                db 'O', 0
+    simboloOcaSeleccionada    db 'Ø', 0
 
     ;simbolos auxiliares para dibujar el tablero
-    pared                db '|', 0
-    techoPiso            db '  ------------------------------', 10, 0
-    columnasString db '    1   2   3   4   5   6   7', 10, 0
+    pared                db '║', 0
+    techo                db '  ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╗', 10, 0
+    piso                 db '  ╚═══╩═══╩═══╩═══╩═══╩═══╩═══╝', 10, 0
+    intermedio           db '  ╠═══╬═══╬═══╬═══╬═══╬═══╬═══╣', 10, 0
+    columnasString       db '    1   2   3   4   5   6   7', 10, 0
     saltoDeLinea         db 10, 0
 
                                    
@@ -80,14 +82,15 @@ section  .text
 
 
 mostrarMatriz:
+    limpiarPantalla
     mostrarString columnasString; mostramos columnas
-    mostrarString techoPiso; mostramos el techo del tablero
+    mostrarString techo; mostramos el techo del tablero
     
     sub rsp, 8
     call recorrerMatriz
     add rsp, 8
     
-    mostrarString techoPiso; mostramos el piso del tablero
+    mostrarString piso; mostramos el piso del tablero
     ret
 
 recorrerMatriz:
@@ -113,6 +116,7 @@ siguienteFila:
     add qword[filaActual], 1; aumentamos en uno la fila
     cmp qword[filaActual], 8
     je finLoop; si fila > 7, damos por finalizada la matriz
+    mostrarString intermedio
     mostrarNumero [filaActual]
     jmp recorrerFilas; volvemos a mostrar otra fila
 
