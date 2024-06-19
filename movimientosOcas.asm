@@ -80,7 +80,7 @@ solicitarMovimientoOca:
     ;limpieza de buffer por si acaso
     mov qword[numQueIngreso], 10  
 
-    pedirNumeroAlUsuario noMoverseOca
+    pedirNumeroAlUsuario solicitarMovimientoOca
 
     mov     rax, qword[numQueIngreso]
     
@@ -100,7 +100,7 @@ solicitarMovimientoOca:
     cmp     rax, qword[teclaFinDelJuego]
     je      finalizarJuegoDesdeOca
 
-    ;jmp     noMoverseOca
+    jmp     solicitarMovimientoOca
     ret
     
 finalizarJuegoDesdeOca:

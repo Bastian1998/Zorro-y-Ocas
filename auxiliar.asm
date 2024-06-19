@@ -1,3 +1,4 @@
+
 %macro calcularDesplazamineto 2
 ; %1: Fila actual, %2: Columna actual
     mov     rax, [%1]              ; Cargar fila en rax

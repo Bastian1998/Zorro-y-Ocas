@@ -1,6 +1,15 @@
 extern  printf
 extern puts
 
+;macro que recibe un entero y lo muestra por pantalla
+%macro mostrarNumeroConString 2
+    mov rdi, %1 ;cargo el string
+    mov rsi, %2 ;cargo el numero
+    sub rsp,8 
+    call printf
+    add rsp,8
+%endmacro
+
 ;macro que recibe un string y lo muestra por pantalla
 %macro mostrarString 1
     mov rdi, %1 ;cargo el string
@@ -67,12 +76,14 @@ section  .data
     simboloOcaSeleccionada    db 'Ø', 0
 
     ;simbolos auxiliares para dibujar el tablero
-    pared                db '║', 0
-    techo                db '  ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╗', 10, 0
-    piso                 db '  ╚═══╩═══╩═══╩═══╩═══╩═══╩═══╝', 10, 0
-    intermedio           db '  ╠═══╬═══╬═══╬═══╬═══╬═══╬═══╣', 10, 0
-    columnasString       db '    1   2   3   4   5   6   7', 10, 0
-    saltoDeLinea         db 10, 0
+    pared                       db '║', 0
+    techo                       db '  ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╗', 10, 0
+    piso                        db '  ╚═══╩═══╩═══╩═══╩═══╩═══╩═══╝', 10, 0
+    intermedio                  db '  ╠═══╬═══╬═══╬═══╬═══╬═══╬═══╣', 10, 0
+    columnasString              db '    1   2   3   4   5   6   7', 10, 0
+    mensajeCantidadOcasComidas  db 10, 'Cantidad de ocas comidas por el zorro: %li', 10, 0
+    mensajeCuantasOcasFaltan    db 10, 'Al zorro le falta comer %li ocas para ganar.', 10, 0
+    saltoDeLinea                db 10, 0
 
                                    
 section  .bss
@@ -88,8 +99,12 @@ mostrarMatriz:
     sub rsp, 8
     call recorrerMatriz
     add rsp, 8
-    
+
     mostrarString piso; mostramos el piso del tablero
+    mostrarNumeroConString mensajeCantidadOcasComidas, qword[ocasComidas]
+    mov rax, 12
+    sub rax, qword[ocasComidas]
+    mostrarNumeroConString mensajeCuantasOcasFaltan, rax 
     ret
 
 recorrerMatriz:
@@ -122,6 +137,7 @@ siguienteFila:
 finLoop:
     ;terminamos de mostrar la matriz
     ret
+
 
 
     

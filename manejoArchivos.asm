@@ -6,23 +6,30 @@ extern fclose
 extern sprintf
 extern read
 
+%macro escribirNumeroEnElArchivo 1
+    
+    mov rdi, numeroAEscribir    	; Destination numeroAEscribir
+    mov rsi, formato        		; Format string
+    mov rdx, r8
+    sub rsp, 8           			; Number to format
+    call sprintf
+    add rsp, 8
+
+    mov rdi, numeroAEscribir
+    mov rsi, [fileHandle]
+    sub rsp, 8
+    call fputs
+    add rsp, 8
+
+%endmacro
 
 %macro escribirElemento 2
     ; %1: Fila actual, %2: Columna actual
     calcularDesplazamineto %1, %2
     mov     rdx, qword[tablero + rax] ; Cargar el valor desde tablero[rax]
-
     lea     r8, qword[rdx] 			; copio la direccion de memoria del string correspondiente dependiendo de el elemento 
 
-    mov rdi, numeroAEscribir    	; Destination numeroAEscribir
-    mov rsi, formato        		; Format string
-    mov rdx, r8           			; Number to format
-    call sprintf
-
-    mov rdi, numeroAEscribir
-    mov rsi, [fileHandle]
-    call fputs
-
+    escribirNumeroEnElArchivo numeroAEscribir
 %endmacro
 
 %macro _mostrarString 1
@@ -64,6 +71,7 @@ section  .data
     fileName		db	"partidaGuardada.txt", 0
 	modoEscritura   db	"w+", 0
     modoLectura     db  "r", 0
+    msgErrOpen      db  "Error", 0
     finLinea    	db 	10, 0
     auxiliar         dq  0
 
@@ -75,10 +83,13 @@ section  .bss
 section  .text
 
 guardarArchivo:
-    sub rsp, 8 
+
     mov rdi, fileName
     mov rsi, modoEscritura
+
+    sub rsp, 8 
     call fopen
+    add rsp, 8
 
     cmp rax, 0
     jg archivoAbiertoEscritura
@@ -95,7 +106,6 @@ archivoAbiertoEscritura:
 
 filasArchivoEscritura:
     escribirElemento filaActual, columnaActual ; mostramos el elemento i,j
-
     inc qword[columnaActual]    ; incrementamos en 1 la columna
     cmp qword[columnaActual], 8
     je proximaFilaEscritura     ; si la columna es <7; saltamos a la siguiente fila
@@ -109,6 +119,7 @@ proximaFilaEscritura:
     jmp filasArchivoEscritura
 
 finArchivo:
+    jmp escrbirEstadoActualEstadisticas
     ret	
 
 lecturaArchivo:
@@ -145,3 +156,6 @@ proximaFilaLectura:
     cmp qword[filaActual], 8
     je finArchivo               ; si fila > 7, damos por finalizada la matriz
     jmp filasArchivoLectura
+
+escrbirEstadoActualEstadisticas:
+    
