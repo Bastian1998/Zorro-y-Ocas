@@ -10,7 +10,8 @@ extern read
     
     mov rdi, numeroAEscribir    	; Destination numeroAEscribir
     mov rsi, formato        		; Format string
-    mov rdx, r8
+    mov rdx, %1
+    
     sub rsp, 8           			; Number to format
     call sprintf
     add rsp, 8
@@ -23,13 +24,21 @@ extern read
 
 %endmacro
 
+%macro obtenerProximoNumeroArchivo 0
+    mov rdi, [fileHandle]
+    sub rsp, 8
+    call fgetc
+    add rsp, 8
+    sub rax, '0'
+%endmacro
+
 %macro escribirElemento 2
     ; %1: Fila actual, %2: Columna actual
     calcularDesplazamineto %1, %2
     mov     rdx, qword[tablero + rax] ; Cargar el valor desde tablero[rax]
     lea     r8, qword[rdx] 			; copio la direccion de memoria del string correspondiente dependiendo de el elemento 
 
-    escribirNumeroEnElArchivo numeroAEscribir
+    escribirNumeroEnElArchivo r8
 %endmacro
 
 %macro _mostrarString 1
@@ -96,10 +105,10 @@ guardarArchivo:
 
     mov rdi, msgErrOpen
     call puts
-    jmp fin
+    ret
 
 archivoAbiertoEscritura:
-    mov [fileHandle], rax
+    mov qword[fileHandle], rax
     mov qword[filaActual], 1
     mov qword[columnaActual], 1
 	jmp filasArchivoEscritura
@@ -115,13 +124,32 @@ proximaFilaEscritura:
     mov qword[columnaActual], 1 ; reiniciamos columnas
     add qword[filaActual], 1    ; aumentamos en uno la fila
     cmp qword[filaActual], 8
-    je finArchivo               ; si fila > 7, damos por finalizada la matriz
+    je finEscrituraArchivo      ; si fila > 7, damos por finalizada la matriz
     jmp filasArchivoEscritura
 
-finArchivo:
-    jmp escrbirEstadoActualEstadisticas
-    ret	
+finEscrituraArchivo:
 
+    sub rsp, 8 
+    call escrbirEstadoActualEstadisticas
+    add rsp, 8
+
+    jmp cerrarArchivo
+
+finLecturaArchivo:
+
+    sub rsp, 8 
+    call leerEstadoActualEstadisticas
+    add rsp, 8
+
+    jmp cerrarArchivo	
+
+cerrarArchivo:
+     mov rdi, [fileHandle]      ; Manejador de archivo
+    sub rsp, 8                 ; Ajustar la pila para alineación
+    call fclose                ; Llamar a fclose
+    add rsp, 8                 ; Restaurar la pila
+    
+    ret	
 lecturaArchivo:
     mov rdi, fileName
     mov rsi, modoLectura
@@ -134,7 +162,7 @@ lecturaArchivo:
     jg archivoAbiertoLectura
 
     mov qword[seAbrioArchivo], 1
-    jmp finArchivo
+    ret
 
 archivoAbiertoLectura:
     mov [fileHandle], rax
@@ -154,8 +182,54 @@ proximaFilaLectura:
     mov qword[columnaActual], 1 ; reiniciamos columnas
     add qword[filaActual], 1    ; aumentamos en uno la fila
     cmp qword[filaActual], 8
-    je finArchivo               ; si fila > 7, damos por finalizada la matriz
+    je finLecturaArchivo               ; si fila > 7, damos por finalizada la matriz
     jmp filasArchivoLectura
 
 escrbirEstadoActualEstadisticas:
-    
+        
+    escribirNumeroEnElArchivo qword[filaZorro]
+    escribirNumeroEnElArchivo qword[columnaZorro]
+    escribirNumeroEnElArchivo qword[turno]
+    escribirNumeroEnElArchivo qword[ocasComidas]
+    escribirNumeroEnElArchivo qword[cantMovZorroArriba]
+    escribirNumeroEnElArchivo qword[cantMovZorroAbajo]
+    escribirNumeroEnElArchivo qword[cantMovZorroDerecha]
+    escribirNumeroEnElArchivo qword[cantMovZorroIzquierda]
+    escribirNumeroEnElArchivo qword[cantMovZorroDiagArribaDer]
+    escribirNumeroEnElArchivo qword[cantMovZorroDiagArribaIzq]
+    escribirNumeroEnElArchivo qword[cantMovZorroDiagAbajoDer]
+    escribirNumeroEnElArchivo qword[cantMovZorroDiagAbajoIzq]
+    ret
+
+leerEstadoActualEstadisticas:
+    obtenerProximoNumeroArchivo
+    mov qword[filaZorro], rax
+    obtenerProximoNumeroArchivo
+    mov qword[columnaZorro], rax
+    obtenerProximoNumeroArchivo
+    mov qword[turno], rax
+    obtenerProximoNumeroArchivo
+    mov qword[ocasComidas], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroArriba], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroAbajo], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroDerecha], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroIzquierda], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroDiagArribaDer], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroDiagArribaIzq], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroDiagAbajoDer], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroDiagAbajoIzq], rax
+    ret
+
+
+
+
+
+

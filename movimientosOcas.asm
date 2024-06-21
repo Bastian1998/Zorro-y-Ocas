@@ -11,7 +11,7 @@ extern puts
 %endmacro
 
 section  .data
-    mensajeDireccionesOca         db 10, '« « « Turno Ocas » » »', 10, 'Oca: Seleccione en que dirección moverse', 10, '2: Abajo', 10, '6: Derecha', 10, '4: Izquierda',10,'5: Volver a seleccionar Oca',10, '0: FIN DEL JUEGO', 10, 0
+    mensajeDireccionesOca         db 10, '« « « Turno Ocas » » »', 10, 'Oca: Seleccione en que dirección moverse', 10, '2: Abajo', 10, '6: Derecha', 10, '4: Izquierda',10,'5: Volver a seleccionar Oca',10, '0: Volver al menu principal', 10, 0
     mensajeFilaOca                db 10, '« « « Turno Ocas » » »', 10,'Jugador Ocas: Ingrese la fila de la oca que quiere mover.', 10, 0
     mensajeColumnaOca             db 10, 'Jugador Ocas: Ingrese la columna de la oca que quiere mover.', 10, 0
     mensajeErrorOca               db 10, '¡Ups! !La celda que seleccionaste no contiene una oca! Vuelve a intentarlo.', 10, 0
@@ -97,16 +97,19 @@ solicitarMovimientoOca:
     cmp     rax, qword[teclaVolverASeleccionarOca]
     je      volverASeleccionarOca  
 
-    cmp     rax, qword[teclaFinDelJuego]
-    je      finalizarJuegoDesdeOca
+    cmp     rax, qword[teclaVolver]
+    je      volverMenuDesdeOca
 
     jmp     solicitarMovimientoOca
     ret
     
-finalizarJuegoDesdeOca:
+volverMenuDesdeOca:
     ;si se finalizo desde la oca se desmarca la oca seleccionada
     cambiarCelda filaOcaAMover, columnaOcaAMover, 3
-    jmp finalizarJuego
+    sub rsp, 8
+    call menuInicial
+    add rsp, 8
+    ret
 
 volverASeleccionarOca:
     ;se desmarca la oca seleccionada, se limpia la pantalla y se vuelve a solicitar Oca

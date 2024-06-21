@@ -5,9 +5,11 @@ global  main
 %include 'menu.asm'
 %include 'mensajesGrandes.asm'
 %include 'cambiarOrientacion.asm'
+%include 'personalizarSimbolos.asm'
 extern  gets
 extern  sscanf      
-extern system    
+extern system  
+extern unlink
 
 section  .data
         numeroDebug                                 db 10,'el numero es %li',10,10, 0 ;string que uso para debuguear
@@ -35,7 +37,7 @@ main:
     add rsp, 8
 
     cmp qword[fin], 0
-    je finDelJuego
+    je pausaElJuego
 
     sub rsp, 8
     call jugar 
@@ -95,7 +97,7 @@ finalizarPorZorroEncerrado:
 
 
 pausaElJuego:
-    limpiarPantalla
+    reinicarPantalla
     mostrarString mensajeFin
     mostrarString mensajePorAhora
     sub rsp, 8
@@ -109,6 +111,12 @@ finDelJuego:
     sub rsp, 8
     call mostrarEstadisticasZorro
     add rsp, 8
+    mov rdi, fileName
+
+    sub rsp, 8
+    call unlink
+    add rsp, 8
+
     ;eliminarArchivo
     ;terminar el juego
     ret

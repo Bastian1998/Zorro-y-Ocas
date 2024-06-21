@@ -3,8 +3,8 @@ extern puts
 section  .data
     
     seAbrioArchivo  dq  0
-    mensajeCargarArchivo db 10,'¿Deseas cargar la partida en el punto que la dejaste la última vez?',10,10, '1. Si', 10,10,'2. No',10,10,0
-    mensajeMenuInicial   db 10,10,'1. Iniciar partida',10, '2. Elegir orientiacón del tablero',10,'3. Personalizar simbolos',10,'4. Salir',10,10,10,0
+    mensajeCargarArchivo db 10,'¿Deseas cargar la partida en el punto que la dejaste la última vez? (Si respondes que no tu ultima partida sera eliminada automaticamente)',10,10, '1. Si', 10,10,'2. No',10,10,0
+    mensajeMenuInicial   db 10,10,'1. Jugar',10, '2. Elegir orientiacón del tablero',10,'3. Personalizar simbolos',10,'4. Salir',10,10,10,0
 
 section  .text
 
@@ -37,8 +37,8 @@ menuInicial:
     cmp     qword[numQueIngreso], 2
     je      cambiarOrientacion
 
-    ;cmp     qword[numQueIngreso], 3
-    ;je      personalizarSimbolos
+    cmp     qword[numQueIngreso], 3
+    je      personalizarSimbolos
 
     cmp     qword[numQueIngreso], 4
     je      salirDelJuegoDesdeElMenu     
@@ -70,7 +70,7 @@ cargarArchivo:
 
 salirDelJuegoDesdeElMenu:
     mov qword[fin], 0
-    limpiarPantalla
+    reiniciarPantalla
     ret
 
 retornar:

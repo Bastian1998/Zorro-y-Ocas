@@ -1,7 +1,7 @@
 extern  printf
 extern puts
 section  .data
-     mensajeDireccionesZorro                    db 10, '« « « Turno Zorro » » »', 10, 'Seleccione en que dirección moverse', 10, '8: Arriba', 10, '6: Derecha', 10, '4: Izquierda', 10, '2: Abajo', 10, '9: Diagonal arriba/derecha', 10, '7: Diagonal arriba/izquierda', 10, '1: Diagonal abajo/izquierda', 10, '3: Diagonal abajo/derecha', 10,'0: FIN DEL JUEGO',10,10,0
+     mensajeDireccionesZorro                    db 10, '« « « Turno Zorro » » »', 10, 'Seleccione en que dirección moverse', 10, '8: Arriba', 10, '6: Derecha', 10, '4: Izquierda', 10, '2: Abajo', 10, '9: Diagonal arriba/derecha', 10, '7: Diagonal arriba/izquierda', 10, '1: Diagonal abajo/izquierda', 10, '3: Diagonal abajo/derecha', 10,'0: Volver al menu principal',10,10,0
      mensajeQuiereMoverDeNuevo                  db 10, 10, 'Zorro: ¡Acabas de comer una oca! ¿Quieres volver a mover?', 10, '1: Si', 10, '2: No',10,10,0
      mensajeMostrarEstadistica                  db 10, 'Estadisticas del Zorro en todas las direcciones:  ', 10, 0
      mensajecantMovZorroArriba                  db 10, 'Arriba: %li', 10, 0
@@ -72,11 +72,17 @@ solicitarMovimientoZorro:
     cmp     rax, qword[teclaMovDiagDerAbajo]
     je      movDiagonalAbajoDerechaZorro
 
-    cmp     rax, qword[teclaFinDelJuego]
-    je      finalizarJuego
+    cmp     rax, qword[teclaVolver]
+    je      volverAlMenu
 
     jmp     noMoverseZorro
 
+
+volverAlMenu:
+    sub rsp, 8
+    call menuInicial
+    add rsp, 8
+    ret
 verSiSePuedeComerOca:
     mov rax, qword[filaObjetivo]
     mov rbx, qword[columnaObjetivo]
