@@ -1,94 +1,235 @@
 extern puts
 extern fopen
+extern fgetc
 extern fputs
 extern fclose
 extern sprintf
+extern read
+
+%macro escribirNumeroEnElArchivo 1
+    
+    mov rdi, numeroAEscribir    	; Destination numeroAEscribir
+    mov rsi, formato        		; Format string
+    mov rdx, %1
+    
+    sub rsp, 8           			; Number to format
+    call sprintf
+    add rsp, 8
+
+    mov rdi, numeroAEscribir
+    mov rsi, [fileHandle]
+    sub rsp, 8
+    call fputs
+    add rsp, 8
+
+%endmacro
+
+%macro obtenerProximoNumeroArchivo 0
+    mov rdi, [fileHandle]
+    sub rsp, 8
+    call fgetc
+    add rsp, 8
+    sub rax, '0'
+%endmacro
 
 %macro escribirElemento 2
     ; %1: Fila actual, %2: Columna actual
-    mov     rax, [%1]              ; Cargar fila en rax
+    calcularDesplazamineto %1, %2
+    mov     rdx, qword[tablero + rax] ; Cargar el valor desde tablero[rax]
+    lea     r8, qword[rdx] 			; copio la direccion de memoria del string correspondiente dependiendo de el elemento 
+
+    escribirNumeroEnElArchivo r8
+%endmacro
+
+%macro _mostrarString 1
+    mov rdi, %1 ;cargo el string
+    sub rsp,8 
+    call printf
+    add rsp,8
+%endmacro
+
+%macro lecturaElemento 2
+    mov     r11, [%1]              ; Cargar fila en r11
     mov     rcx, qword[longFila]   ; Cargar longitud de la fila
-    dec     rax                    ; Convertir a índice base 0
-    imul    rax, rcx               ; rax = fila * longFila
+    dec     r11                    ; Convertir a índice base 0
+    imul    r11, rcx               ; r11 = fila * longFila
 
     mov     rbx, [%2]              ; Cargar columna en rbx
     mov     r8, qword[longElemento]; Cargar longitud del elemento
     dec     rbx                    ; Convertir a índice base 0
     imul    rbx, r8                ; rbx = columna * longElemento
 
-    add     rax, rbx               ; rax = rax + rbx, posición total en el tablero
-    mov     rdx, qword[tablero + rax] ; Cargar el valor desde tablero[rax]
+    add r11, rbx
 
-    lea     r8, qword[rdx] 			; copio la direccion de memoria del string correspondiente dependiendo de el elemento 
+    mov rdi, [fileHandle]
+    mov qword[auxiliar], r11
+    call fgetc
 
-    mov rdi, numeroAEscribir    	; Destination numeroAEscribir
-    mov rsi, formato        		; Format string
-    mov rdx, r8           			; Number to format
-    call sprintf
+    sub rax, '0'
+    ; mov [elementoArchivo], rax           
+    mov r11, qword[auxiliar]
 
-    mov rdi, numeroAEscribir
-    mov rsi, [fileHandle]
-    call fputs
+    mov qword[tablero + r11], rax  
 
 %endmacro
-
 
 section  .data
 ; cada elemento es de 8 bytes. -1 es si es invalido , 0 si la celda esta vacio, 2 si hay una oca, 1 si esta el zorro
 
-    formato    		db '%d ', 0
-    
+    formato    		db  '%d', 0
     fileName		db	"partidaGuardada.txt", 0
-	mode		    db	"w+", 0
-	msgErrOpen      db  "Error en apertura de archivo", 0
+	modoEscritura   db	"w+", 0
+    modoLectura     db  "r", 0
+    msgErrOpen      db  "Error", 0
     finLinea    	db 	10, 0
-                                   
+    auxiliar         dq  0
+
 section  .bss
-    fileHandle      	resq 1
-    numeroAEscribir     resb 20
+    fileHandle      	resq 1    ; Espacio para el puntero al archivo    
+    elementoArchivo     resq 1    ; Variable temporal para almacenar valores convertidos
+    numeroAEscribir     resq 1
+
 section  .text
 
 guardarArchivo:
-    sub rsp, 8 
-    ; Open file for writing
+
     mov rdi, fileName
-    mov rsi, mode
+    mov rsi, modoEscritura
+
+    sub rsp, 8 
     call fopen
+    add rsp, 8
 
     cmp rax, 0
-    jg archivoAbierto
+    jg archivoAbiertoEscritura
 
-    ; Error opening file
     mov rdi, msgErrOpen
     call puts
-    jmp fin
+    ret
 
-archivoAbierto:
+archivoAbiertoEscritura:
+    mov qword[fileHandle], rax
+    mov qword[filaActual], 1
+    mov qword[columnaActual], 1
+	jmp filasArchivoEscritura
+
+filasArchivoEscritura:
+    escribirElemento filaActual, columnaActual ; mostramos el elemento i,j
+    inc qword[columnaActual]    ; incrementamos en 1 la columna
+    cmp qword[columnaActual], 8
+    je proximaFilaEscritura     ; si la columna es <7; saltamos a la siguiente fila
+    jmp filasArchivoEscritura
+
+proximaFilaEscritura:
+    mov qword[columnaActual], 1 ; reiniciamos columnas
+    add qword[filaActual], 1    ; aumentamos en uno la fila
+    cmp qword[filaActual], 8
+    je finEscrituraArchivo      ; si fila > 7, damos por finalizada la matriz
+    jmp filasArchivoEscritura
+
+finEscrituraArchivo:
+
+    sub rsp, 8 
+    call escrbirEstadoActualEstadisticas
+    add rsp, 8
+
+    jmp cerrarArchivo
+
+finLecturaArchivo:
+
+    sub rsp, 8 
+    call leerEstadoActualEstadisticas
+    add rsp, 8
+
+    jmp cerrarArchivo	
+
+cerrarArchivo:
+     mov rdi, [fileHandle]      ; Manejador de archivo
+    sub rsp, 8                 ; Ajustar la pila para alineación
+    call fclose                ; Llamar a fclose
+    add rsp, 8                 ; Restaurar la pila
+    
+    ret	
+lecturaArchivo:
+    mov rdi, fileName
+    mov rsi, modoLectura
+
+    sub rsp, 8 
+    call fopen
+    add rsp, 8 
+
+    cmp rax, 0
+    jg archivoAbiertoLectura
+
+    mov qword[seAbrioArchivo], 1
+    ret
+
+archivoAbiertoLectura:
     mov [fileHandle], rax
     mov qword[filaActual], 1
     mov qword[columnaActual], 1
-	jmp filasArc
+	jmp filasArchivoLectura
 
-
-filasArc:
-    escribirElemento filaActual, columnaActual ; mostramos el elemento i,j
-
-    inc qword[columnaActual]; incrementamos en 1 la columna
+filasArchivoLectura:
+    lecturaElemento filaActual, columnaActual
+    inc qword[columnaActual]    ; incrementamos en 1 la columna
     cmp qword[columnaActual], 8
-    je proximaFila ; si la columna es <7; saltamos a la siguiente fila
-    jmp filasArc
+    je proximaFilaLectura       ; si la columna es <7; saltamos a la siguiente fila
+    
+    jmp filasArchivoLectura
 
-proximaFila:
-    mov rdi, saltoDeLinea
-    mov rsi, [fileHandle]
-    call fputs
-
-    mov qword[columnaActual], 1; reiniciamos columnas
-    add qword[filaActual], 1; aumentamos en uno la fila
+proximaFilaLectura:
+    mov qword[columnaActual], 1 ; reiniciamos columnas
+    add qword[filaActual], 1    ; aumentamos en uno la fila
     cmp qword[filaActual], 8
-    je finGuardado; si fila > 7, damos por finalizada la matriz
-    jmp filasArc
+    je finLecturaArchivo               ; si fila > 7, damos por finalizada la matriz
+    jmp filasArchivoLectura
 
-finGuardado:
-    add rsp, 8 
-    ret	
+escrbirEstadoActualEstadisticas:
+        
+    escribirNumeroEnElArchivo qword[filaZorro]
+    escribirNumeroEnElArchivo qword[columnaZorro]
+    escribirNumeroEnElArchivo qword[turno]
+    escribirNumeroEnElArchivo qword[ocasComidas]
+    escribirNumeroEnElArchivo qword[cantMovZorroArriba]
+    escribirNumeroEnElArchivo qword[cantMovZorroAbajo]
+    escribirNumeroEnElArchivo qword[cantMovZorroDerecha]
+    escribirNumeroEnElArchivo qword[cantMovZorroIzquierda]
+    escribirNumeroEnElArchivo qword[cantMovZorroDiagArribaDer]
+    escribirNumeroEnElArchivo qword[cantMovZorroDiagArribaIzq]
+    escribirNumeroEnElArchivo qword[cantMovZorroDiagAbajoDer]
+    escribirNumeroEnElArchivo qword[cantMovZorroDiagAbajoIzq]
+    ret
+
+leerEstadoActualEstadisticas:
+    obtenerProximoNumeroArchivo
+    mov qword[filaZorro], rax
+    obtenerProximoNumeroArchivo
+    mov qword[columnaZorro], rax
+    obtenerProximoNumeroArchivo
+    mov qword[turno], rax
+    obtenerProximoNumeroArchivo
+    mov qword[ocasComidas], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroArriba], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroAbajo], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroDerecha], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroIzquierda], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroDiagArribaDer], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroDiagArribaIzq], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroDiagAbajoDer], rax
+    obtenerProximoNumeroArchivo
+    mov qword[cantMovZorroDiagAbajoIzq], rax
+    ret
+
+
+
+
+
+

@@ -11,10 +11,10 @@ extern puts
 %endmacro
 
 section  .data
-    mensajeDireccionesOca   db 10, '« « « Turno Ocas » » »', 10, 'Oca: Seleccione en que dirección moverse', 10, '2: Abajo', 10, '6: Derecha', 10, '4: Izquierda',10,'5: Volver a seleccionar Oca',10, '0: FIN DEL JUEGO', 10, 0
-    mensajeFilaOca          db 10, '« « « Turno Ocas » » »', 10,'Jugador Ocas: Ingrese la fila de la oca que quiere mover.', 10, 0
-    mensajeColumnaOca       db 10, 'Jugador Ocas: Ingrese la columna de la oca que quiere mover.', 10, 0
-    mensajeErrorOca         db 10, '¡Ups! !La celda que seleccionaste no contiene una oca! Vuelve a intentarlo.', 10, 0
+    mensajeDireccionesOca         db 10, '« « « Turno Ocas » » »', 10, 'Oca: Seleccione en que dirección moverse', 10, '2: Abajo', 10, '6: Derecha', 10, '4: Izquierda',10,'5: Volver a seleccionar Oca',10, '0: Volver al menu principal', 10, 0
+    mensajeFilaOca                db 10, '« « « Turno Ocas » » »', 10,'Jugador Ocas: Ingrese la fila de la oca que quiere mover.', 10, 0
+    mensajeColumnaOca             db 10, 'Jugador Ocas: Ingrese la columna de la oca que quiere mover.', 10, 0
+    mensajeErrorOca               db 10, '¡Ups! !La celda que seleccionaste no contiene una oca! Vuelve a intentarlo.', 10, 0
     mensajeOcaHaSidoMarcada       db 10, 'La oca que seleccionaste aparace marcada como Ø, ahora elige que movimiento deseas hacer.', 10, 0
                                 
 section  .bss
@@ -69,10 +69,7 @@ solicitarOcaAMover:
     cambiarCelda filaOcaAMover, columnaOcaAMover, 4
 
     ;limpiamos y mostramos para mas claridad
-    limpiarPantalla
-    sub rsp, 8
-    call mostrarMatriz
-    add rsp, 8
+    reiniciarPantalla
 
     mostrarString mensajeOcaHaSidoMarcada
     ret
@@ -83,24 +80,7 @@ solicitarMovimientoOca:
     ;limpieza de buffer por si acaso
     mov qword[numQueIngreso], 10  
 
-    ;Pido al usuario un numero
-    mov     rdi, buffer
-    sub     rsp, 8
-    call    gets
-    add     rsp ,8
-
-    ; Verifico que sea entero
-    mov     rdi, buffer       ; Parametro 1: campo donde están los datos a leer
-    mov     rsi, numFormat    ; Parametro 2: dir del string que contiene los formatos
-    mov     rdx, numQueIngreso ; Parametro 3: dir del campo que recibirá el dato formateado
-    
-    sub     rsp, 8
-    call    sscanf
-    add     rsp, 8
-
-    ; Si no es entero se lo pido de nuevo
-    cmp     rax, 1            ; rax tiene la cantidad de campos que pudo formatear correctamente
-    jl      noMoverseOca
+    pedirNumeroAlUsuario solicitarMovimientoOca
 
     mov     rax, qword[numQueIngreso]
     
@@ -117,24 +97,24 @@ solicitarMovimientoOca:
     cmp     rax, qword[teclaVolverASeleccionarOca]
     je      volverASeleccionarOca  
 
-    cmp     rax, qword[teclaFinDelJuego]
-    je      finalizarJuegoDesdeOca
+    cmp     rax, qword[teclaVolver]
+    je      volverMenuDesdeOca
 
-    ;jmp     noMoverseOca
+    jmp     solicitarMovimientoOca
     ret
     
-finalizarJuegoDesdeOca:
+volverMenuDesdeOca:
     ;si se finalizo desde la oca se desmarca la oca seleccionada
     cambiarCelda filaOcaAMover, columnaOcaAMover, 3
-    jmp finalizarJuego
+    sub rsp, 8
+    call menuInicial
+    add rsp, 8
+    ret
 
 volverASeleccionarOca:
     ;se desmarca la oca seleccionada, se limpia la pantalla y se vuelve a solicitar Oca
     cambiarCelda filaOcaAMover, columnaOcaAMover, 3
-    limpiarPantalla
-    sub rsp, 8
-    call mostrarMatriz
-    add rsp, 8
+    reiniciarPantalla
     jmp  solicitarAccionOca
 
 noMoverseOca:
@@ -177,7 +157,6 @@ movDerechaOca:
     call    verSiEstaVacio
     add     rsp ,8
 
-    mostrarNumeroDebug 5
     cmp qword[booleano], 0
     je  moverOca
 
@@ -238,24 +217,9 @@ solicitarFilaOcaAMover:
     mostrarString mensajeFilaOca
 
     mov qword[numQueIngreso], 10 
+
     ;Pido al usuario un numero
-    mov     rdi, buffer
-    sub     rsp, 8
-    call    gets
-    add     rsp ,8
-
-    ; Verifico que sea entero
-    mov     rdi, buffer       ; Parametro 1: campo donde están los datos a leer
-    mov     rsi, numFormat    ; Parametro 2: dir del string que contiene los formatos
-    mov     rdx, numQueIngreso ; Parametro 3: dir del campo que recibirá el dato formateado
-    
-    sub     rsp, 8
-    call    sscanf
-    add     rsp, 8
-
-    ; Si no es entero se lo pido de nuevo
-    cmp     rax, 1            ; rax tiene la cantidad de campos que pudo formatear correctamente
-    jl      solicitarFilaOcaAMover
+    pedirNumeroAlUsuario solicitarFilaOcaAMover
 
     ;me fijo si la fila esta entre [1, 7], sino vuelvo a solicitar
     cmp     qword[numQueIngreso], 0
@@ -275,24 +239,7 @@ solicitarColumnaOcaAMover:
 
     mov qword[numQueIngreso], 10 
 
-    ;Pido al usuario un numero
-    mov     rdi, buffer
-    sub     rsp, 8
-    call    gets
-    add     rsp ,8
-
-    ; Verifico que sea entero
-    mov     rdi, buffer       ; Parametro 1: campo donde están los datos a leer
-    mov     rsi, numFormat    ; Parametro 2: dir del string que contiene los formatos
-    mov     rdx, numQueIngreso ; Parametro 3: dir del campo que recibirá el dato formateado
-   
-    sub     rsp, 8
-    call    sscanf
-    add     rsp, 8
-
-    ; Si no es entero se lo pido de nuevo
-    cmp     rax, 1            ; rax tiene la cantidad de campos que pudo formatear correctamente
-    jl      solicitarColumnaOcaAMover
+    pedirNumeroAlUsuario solicitarColumnaOcaAMover
 
     ;me fijo si la fila esta entre [1, 7], sino vuelvo a solicitar
     cmp     qword[numQueIngreso], 0
