@@ -1,6 +1,8 @@
 
 %macro calcularDesplazamineto 2
-; %1: Fila actual, %2: Columna actual
+    ;%1: Fila actual, %2: Columna actual
+    ;calcula el desplazamiento necesario para llegar al elemento ubicado en la fila y columna deseada
+
     mov     rax, [%1]              ; Cargar fila en rax
     mov     rcx, qword[longFila]   ; Cargar longitud de la fila
     dec     rax                    ; Convertir a índice base 0
@@ -15,7 +17,8 @@
 %endmacro
 
 %macro pedirNumeroAlUsuario 1
-;Pido al usuario un numero
+    ; %1: rutina a la que se vuelve si no es un entero lo que ingresa el usuario
+    ; Pido al usuario un numero
     mov     rdi, buffer
     sub     rsp, 8
     call    gets
@@ -32,7 +35,7 @@
 
     ; Si no es entero se lo pido de nuevo
     cmp     rax, 1            ; rax tiene la cantidad de campos que pudo formatear correctamente
-    jl      %1; si no  es un entero me voy a la parte del codigo pasada por parametro
+    jl      %1;                si no  es un entero me voy a la parte del codigo pasada por parametro
 %endmacro
 
 ;macro que muueve el elemento situado en una celda a otra celda, y dejando vacia la celda anterior

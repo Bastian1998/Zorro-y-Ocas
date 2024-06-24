@@ -1,3 +1,5 @@
+
+; este archivo contiene strings grandes que molestaban en los otros archivos. El del zorro no fue utilizado finalmente. Lo dejamos comentado por si se quiere utilizar.
 section  .data
         bannerBienvenido  db 10, 10, 
                     db '██████╗░██╗███████╗███╗░░██╗██╗░░░██╗███████╗███╗░░██╗██╗██████╗░░█████╗░  ░█████╗░  ███████╗██╗░░░░░', 10

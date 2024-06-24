@@ -34,56 +34,53 @@ section  .text
 solicitarMovimientoZorro:
     reiniciarPantalla
     
+    ;reiniciamos fila y columna objetivo a la actual del zorro
     mov rax, qword[filaZorro]
     mov rbx, qword[columnaZorro]
     mov qword[filaObjetivo], rax
     mov qword[columnaObjetivo], rbx
 
     mostrarString mensajeDireccionesZorro
-    mov qword[numQueIngreso], 10 
+    mov qword[numQueIngreso], 10 ;limpiamos buffer por si acaso
 
     pedirNumeroAlUsuario noMoverseZorro
 
     mov     rax, qword[numQueIngreso]
-    mov     qword[ultimoMovimiento], rax
+    mov     qword[ultimoMovimiento], rax ;actualizamos al ultimo movimiento al que acaba de ingresar
 
     ; aca preguntamos que teca valida ingreso y saltamso a la parte correspondiente, si no ingresa nada valido, no hacemos nada
     cmp     rax, qword[teclaMovArriba]
-    je      movArribaZorro
+    je      intentarMovZorroHaciaArriba
 
     cmp     rax, qword[teclaMovDer]
-    je      movDerechaZorro
+    je      intentarMovZorroHaciaDerecha
 
     cmp     rax, qword[teclaMovAbajo]
-    je      movAbajoZorro
+    je      intentarMovZorroHaciaAbajo
 
     cmp     rax, qword[teclaMovIzq]
-    je      movIzquierdaZorro
+    je      intentarMovZorroHaciaIzquierda
 
     cmp     rax, qword[teclaMovDiagIzqArriba]
-    je      movDiagonalArribaIzquierdaZorro
+    je      intentarMovZorroHaciaDiagIzqArriba
 
     cmp     rax, qword[teclaMovDiagDerArriba]
-    je      movDiagonalArribaDerechaZorro
+    je      intentarMovZorroHaciaDiagDerArriba
 
     cmp     rax, qword[teclaMovDiagIzqAbajo]
-    je      movDiagonalAbajoIzquierdaZorro
+    je      intentarMovZorroHaciaDiagIzqAbajo
 
     cmp     rax, qword[teclaMovDiagDerAbajo]
-    je      movDiagonalAbajoDerechaZorro
+    je      intentarMovZorroHaciaDiagDerAbajo
 
     cmp     rax, qword[teclaVolver]
     je      volverAlMenu
 
     jmp     noMoverseZorro
 
-
-volverAlMenu:
-    sub rsp, 8
-    call menuInicial
-    add rsp, 8
-    ret
 verSiSePuedeComerOca:
+
+    ;reiniciamos fila y columna objetivo a la actual del zorro
     mov rax, qword[filaObjetivo]
     mov rbx, qword[columnaObjetivo]
     mov qword[filaOcaAComer], rax
@@ -93,13 +90,15 @@ verSiSePuedeComerOca:
     mov     rdx, qword[tablero + rax] ; Cargar el valor desde tablero[rax]
     
     cmp     qword[tablero + rax], 3; si la celda objetivo es 2(hay una oca)
-    je      verSiPuedeComerEnEsaDireccion; saltamos aca
+    je      verSiPuedeComerEnDireccionCorrespondiente; vamos a ver si se puede comer en la direccion correspondiente
 
     mov   qword[booleano], 1
     ret
 
 ;salta a la subrutina correspondiente dependiendo de que movimiento proviene el Zorro
-verSiPuedeComerEnEsaDireccion:
+verSiPuedeComerEnDireccionCorrespondiente:
+
+    ;analizamos la situacion particulas dependiende de cual fue el ultimo movimiento (la direccion que se quiso mover el Zorro)
 
     cmp qword[ultimoMovimiento], 8
     je verSiPuedeComerOcaParaArriba
@@ -125,10 +124,14 @@ verSiPuedeComerEnEsaDireccion:
     cmp qword[ultimoMovimiento], 3
     je verSiPuedeComerOcaParaDiagAbajoDer
 
-    mov  qword[booleano], 1
+    mov  qword[booleano], 1; si no es en ninguno el booleano pasa a ser negativo
     ret
 
-;se fija si puede comer oca viendo si esta vacia la celda subsiguiente a la oca
+;FORMATO
+;modificamos variable obejtivo dependiendo de la direccion
+;vemos si esa posicion esta vacia (si hay celda vacia subsiguiente a la oca)
+;si hay entonces piso las ocas
+
 verSiPuedeComerOcaParaArriba:
     dec qword[filaObjetivo]
 
@@ -239,17 +242,20 @@ verSiPuedeComerOcaParaDiagAbajoDer:
 
 ;vuelve vacia a la celda donde esta la oca que comió
 pisarOcas:
-    mov rax, qword[ocasComidas]
-    inc rax
-    mov qword[ocasComidas], rax
+    ;aumentamos ocas comidas
+    inc qword[ocasComidas]
 
+    ;modificamos celda a vacia y cambiamos booleano
     cambiarCelda filaOcaAComer, columnaOcaAComer, 1    
     mov qword[ocaAcabaDeSerComida], 0
+
     ret
 
+;FORMATO
 ; aca dependiendo que ingreso, modificamos la fila y/o columna correspondiente. Validamos que no se salio del limite y si la celda objetivo esta vacia.
-; si esto se cumple, movemos el zorro a esa direccion. Sino, no movemos nada
-movArribaZorro:
+; si esto se cumple, movemos el zorro a esa direccion. Sino, verifciamos si hay una oca y si se puede comer. Si esto ocurre movemos al zorro (y comemos la oca)
+; si no se puede el zorro no se mueve
+intentarMovZorroHaciaArriba:
     dec qword[filaObjetivo]
 
     cmp qword[filaObjetivo], 0
@@ -271,7 +277,7 @@ movArribaZorro:
 
     jmp noMoverseZorro
 
-movDerechaZorro:
+intentarMovZorroHaciaDerecha:
     inc qword[columnaObjetivo]
     
     cmp qword[columnaObjetivo], 8
@@ -292,7 +298,7 @@ movDerechaZorro:
     je  movZorroHaciaDerecha
 
     jmp noMoverseZorro
-movAbajoZorro:
+intentarMovZorroHaciaAbajo:
     inc qword[filaObjetivo]
 
     cmp qword[filaObjetivo], 8
@@ -314,7 +320,7 @@ movAbajoZorro:
 
     jmp noMoverseZorro
 
-movIzquierdaZorro:
+intentarMovZorroHaciaIzquierda:
     dec qword[columnaObjetivo]
 
     cmp qword[columnaObjetivo], 0
@@ -337,7 +343,7 @@ movIzquierdaZorro:
 
     jmp noMoverseZorro
 
-movDiagonalArribaDerechaZorro:
+intentarMovZorroHaciaDiagDerArriba:
     dec qword[filaObjetivo]
     inc qword[columnaObjetivo]
 
@@ -361,7 +367,7 @@ movDiagonalArribaDerechaZorro:
 
     jmp noMoverseZorro
 
-movDiagonalAbajoDerechaZorro:
+intentarMovZorroHaciaDiagDerAbajo:
     inc qword[filaObjetivo]
     inc qword[columnaObjetivo]
 
@@ -385,7 +391,7 @@ movDiagonalAbajoDerechaZorro:
 
     jmp noMoverseZorro
 
-movDiagonalArribaIzquierdaZorro:
+intentarMovZorroHaciaDiagIzqArriba:
     dec qword[filaObjetivo]
     dec qword[columnaObjetivo]
 
@@ -409,7 +415,7 @@ movDiagonalArribaIzquierdaZorro:
 
     jmp noMoverseZorro
 
-movDiagonalAbajoIzquierdaZorro:
+intentarMovZorroHaciaDiagIzqAbajo:
     inc qword[filaObjetivo]
     dec qword[columnaObjetivo]
 
@@ -432,7 +438,7 @@ movDiagonalAbajoIzquierdaZorro:
 
     jmp noMoverseZorro
 
-
+; Estas subrutinas son para encapsular que variable incrementar dependiendo de a que direccion se movio el zorro
 movZorroHaciaArriba:
     inc qword[cantMovZorroArriba]
     jmp moverZorro
@@ -464,76 +470,81 @@ movZorroHaciaDiagAbajoDer:
     inc qword[cantMovZorroDiagAbajoDer]
     jmp moverZorro     
 
+;Ahora esta parte es para ver si el zorro quedo encerrado o no.
 verSiZorroTieneMovimientoPosibles:
 
+    ;inicializamos variable como que el zorro no puede moverse
     mov qword[sePuedeMoverZorro], 1
 
+    ;me fijo si puede moverse en todas las direcciones, si se puede mover en alguna se trasnforma el booleano en TRUE (0) y se retorna. Si no retorna con la variable en FALSE (1)
+
+    sub rsp, 8
+    call verSiZorroPuedeMoverseHaciaArriba 
+    add rsp, 8
+
+    cmp qword[sePuedeMoverZorro], 0
+    je hayMovimientoPosibleZorro
+
+    sub rsp, 8
+    call verSiZorroPuedeMoverseHaciaAbajo 
+    add rsp, 8
+
+    cmp qword[sePuedeMoverZorro], 0
+    je hayMovimientoPosibleZorro
+
+    sub rsp, 8
+    call verSiZorroPuedeMoverseHaciaADerecha 
+    add rsp, 8
+
+    cmp qword[sePuedeMoverZorro], 0
+    je hayMovimientoPosibleZorro
+
+    sub rsp, 8
+    call verSiZorroPuedeMoverseHaciaIzquierda 
+    add rsp, 8
+
+    cmp qword[sePuedeMoverZorro], 0
+    je hayMovimientoPosibleZorro
+
+    sub rsp, 8
+    call verSiZorroPuedeMoverseHaciaDiagonalArribaDer 
+    add rsp, 8
+
+    cmp qword[sePuedeMoverZorro], 0
+    je hayMovimientoPosibleZorro
+
+    sub rsp, 8
+    call verSiZorroPuedeMoverseHaciaDiagonalArribaIzq 
+    add rsp, 8
+
+    cmp qword[sePuedeMoverZorro], 0
+    je hayMovimientoPosibleZorro
+
+    sub rsp, 8
+    call verSiZorroPuedeMoverseHaciaDiagonalAbajoDer 
+    add rsp, 8
+
+    cmp qword[sePuedeMoverZorro], 0
+    je hayMovimientoPosibleZorro
+
+    sub rsp, 8
+    call verSiZorroPuedeMoverseHaciaDiagonalAbajoIzq 
+    add rsp, 8
+
+    cmp qword[sePuedeMoverZorro], 0
+    je hayMovimientoPosibleZorro
+
     
-    sub rsp, 8
-    call verSiZorroPuedeMoverseHaciaArriba ;solicitio un movimiento ya sea al Zorro o a las Ocas
-    add rsp, 8
-
-    cmp qword[sePuedeMoverZorro], 0
-    je hayMovimientoPosibleZorro
-
-    sub rsp, 8
-    call verSiZorroPuedeMoverseHaciaAbajo ;solicitio un movimiento ya sea al Zorro o a las Ocas
-    add rsp, 8
-
-    cmp qword[sePuedeMoverZorro], 0
-    je hayMovimientoPosibleZorro
-
-    sub rsp, 8
-    call verSiZorroPuedeMoverseHaciaADerecha ;solicitio un movimiento ya sea al Zorro o a las Ocas
-    add rsp, 8
-
-    cmp qword[sePuedeMoverZorro], 0
-    je hayMovimientoPosibleZorro
-
-    sub rsp, 8
-    call verSiZorroPuedeMoverseHaciaIzquierda ;solicitio un movimiento ya sea al Zorro o a las Ocas
-    add rsp, 8
-
-    cmp qword[sePuedeMoverZorro], 0
-    je hayMovimientoPosibleZorro
-
-    sub rsp, 8
-    call verSiZorroPuedeMoverseHaciaDiagonalArribaDer ;solicitio un movimiento ya sea al Zorro o a las Ocas
-    add rsp, 8
-
-    cmp qword[sePuedeMoverZorro], 0
-    je hayMovimientoPosibleZorro
-
-    sub rsp, 8
-    call verSiZorroPuedeMoverseHaciaDiagonalArribaIzq ;solicitio un movimiento ya sea al Zorro o a las Ocas
-    add rsp, 8
-
-    cmp qword[sePuedeMoverZorro], 0
-    je hayMovimientoPosibleZorro
-
-    sub rsp, 8
-    call verSiZorroPuedeMoverseHaciaDiagonalAbajoDer ;solicitio un movimiento ya sea al Zorro o a las Ocas
-    add rsp, 8
-
-    cmp qword[sePuedeMoverZorro], 0
-    je hayMovimientoPosibleZorro
-
-    sub rsp, 8
-    call verSiZorroPuedeMoverseHaciaDiagonalAbajoIzq ;solicitio un movimiento ya sea al Zorro o a las Ocas
-    add rsp, 8
-
-    cmp qword[sePuedeMoverZorro], 0
-    je hayMovimientoPosibleZorro
-
-    
     ret
 
-hayMovimientoPosibleZorro:
-    ret
-
-noHayMovimientoPosibleZorro:
-    mov qword[sePuedeMoverZorro], 1
-    ret
+; FORMATO
+; Reiniciamos variables obejtivos
+; Modificamos el obejtivo dependiendo de la direccion
+; nos fijamos si salio del limite del tablero
+; si esta vacio vamos a la subrutina que modifica las variables y retorna
+; modifcamos el objetivo de nuevo en esa direccion (es decir habia una oca y hay que ver si la proxima celda esta vacia y eso significaria que la oca se puede comer)
+; si esta vacio vamos a la subrutina que modifica las variables y retorna
+; sino es que no hay movimientos posibles en esta direccion
 
 verSiZorroPuedeMoverseHaciaArriba:
     mov rax, qword[columnaZorro]
@@ -541,11 +552,7 @@ verSiZorroPuedeMoverseHaciaArriba:
     mov qword[columnaObjetivo], rax
     mov qword[filaObjetivo], rbx
 
-    ;me fijo si hay movimiento hacia arriba
     dec qword[filaObjetivo]
-
-    ;mostrarString mensajeComisteOcas
-    ;mostrarNumero qword[filaObjetivo]
 
     cmp qword[filaObjetivo], 0
     je zorroNoSePuedeMoverEnDireccion
@@ -557,7 +564,6 @@ verSiZorroPuedeMoverseHaciaArriba:
     cmp qword[booleano], 0
     je zorroSePuedeMoverEnDireccion
 
-    ;de nuevo
     dec qword[filaObjetivo]
 
     cmp qword[filaObjetivo], 0
@@ -578,11 +584,7 @@ verSiZorroPuedeMoverseHaciaAbajo:
     mov qword[columnaObjetivo], rax
     mov qword[filaObjetivo], rbx
 
-    ;me fijo si hay movimiento hacia arriba
     inc qword[filaObjetivo]
-
-    ;mostrarString mensajeComisteOcas
-    ;mostrarNumero qword[filaObjetivo]
 
     cmp qword[filaObjetivo], 8
     je zorroNoSePuedeMoverEnDireccion
@@ -594,7 +596,6 @@ verSiZorroPuedeMoverseHaciaAbajo:
     cmp qword[booleano], 0
     je zorroSePuedeMoverEnDireccion
 
-    ;de nuevo
     inc qword[filaObjetivo]
 
     cmp qword[filaObjetivo], 8
@@ -615,11 +616,7 @@ verSiZorroPuedeMoverseHaciaADerecha:
     mov qword[columnaObjetivo], rax
     mov qword[filaObjetivo], rbx
 
-    ;me fijo si hay movimiento hacia arriba
     inc qword[columnaObjetivo]
-
-    ;mostrarString mensajeComisteOcas
-    ;mostrarNumero qword[filaObjetivo]
 
     cmp qword[columnaObjetivo], 8
     je zorroNoSePuedeMoverEnDireccion
@@ -631,7 +628,6 @@ verSiZorroPuedeMoverseHaciaADerecha:
     cmp qword[booleano], 0
     je zorroSePuedeMoverEnDireccion
 
-    ;de nuevo
     inc qword[columnaObjetivo]
 
     cmp qword[columnaObjetivo], 8
@@ -652,11 +648,7 @@ verSiZorroPuedeMoverseHaciaIzquierda:
     mov qword[columnaObjetivo], rax
     mov qword[filaObjetivo], rbx
 
-    ;me fijo si hay movimiento hacia arriba
     dec qword[columnaObjetivo]
-
-    ;mostrarString mensajeComisteOcas
-    ;mostrarNumero qword[filaObjetivo]
 
     cmp qword[columnaObjetivo], 0
     je zorroNoSePuedeMoverEnDireccion
@@ -668,7 +660,6 @@ verSiZorroPuedeMoverseHaciaIzquierda:
     cmp qword[booleano], 0
     je zorroSePuedeMoverEnDireccion
 
-    ;de nuevo
     dec qword[columnaObjetivo]
 
     cmp qword[columnaObjetivo], 0
@@ -689,12 +680,8 @@ verSiZorroPuedeMoverseHaciaDiagonalArribaDer:
     mov qword[columnaObjetivo], rax
     mov qword[filaObjetivo], rbx
 
-    ;me fijo si hay movimiento hacia arriba
     dec qword[filaObjetivo]
     inc qword[columnaObjetivo]
-
-    ;mostrarString mensajeComisteOcas
-    ;mostrarNumero qword[filaObjetivo]
 
     cmp qword[filaObjetivo], 0
     je zorroNoSePuedeMoverEnDireccion
@@ -706,7 +693,6 @@ verSiZorroPuedeMoverseHaciaDiagonalArribaDer:
     cmp qword[booleano], 0
     je zorroSePuedeMoverEnDireccion
 
-    ;de nuevo
     dec qword[filaObjetivo]
     inc qword[columnaObjetivo]
 
@@ -728,12 +714,8 @@ verSiZorroPuedeMoverseHaciaDiagonalArribaIzq:
     mov qword[columnaObjetivo], rax
     mov qword[filaObjetivo], rbx
 
-    ;me fijo si hay movimiento hacia arriba
     dec qword[filaObjetivo]
     dec qword[columnaObjetivo]
-
-    ;mostrarString mensajeComisteOcas
-    ;mostrarNumero qword[filaObjetivo]
 
     cmp qword[filaObjetivo], 0
     je zorroNoSePuedeMoverEnDireccion
@@ -745,7 +727,6 @@ verSiZorroPuedeMoverseHaciaDiagonalArribaIzq:
     cmp qword[booleano], 0
     je zorroSePuedeMoverEnDireccion
 
-    ;de nuevo
     dec qword[filaObjetivo]
     dec qword[columnaObjetivo]
 
@@ -767,12 +748,8 @@ verSiZorroPuedeMoverseHaciaDiagonalAbajoIzq:
     mov qword[columnaObjetivo], rax
     mov qword[filaObjetivo], rbx
 
-    ;me fijo si hay movimiento hacia arriba
     inc qword[filaObjetivo]
     dec qword[columnaObjetivo]
-
-    ;mostrarString mensajeComisteOcas
-    ;mostrarNumero qword[filaObjetivo]
 
     cmp qword[filaObjetivo], 8
     je zorroNoSePuedeMoverEnDireccion
@@ -784,7 +761,6 @@ verSiZorroPuedeMoverseHaciaDiagonalAbajoIzq:
     cmp qword[booleano], 0
     je zorroSePuedeMoverEnDireccion
 
-    ;de nuevo
     inc qword[filaObjetivo]
     dec qword[columnaObjetivo]
 
@@ -806,12 +782,8 @@ verSiZorroPuedeMoverseHaciaDiagonalAbajoDer:
     mov qword[columnaObjetivo], rax
     mov qword[filaObjetivo], rbx
 
-    ;me fijo si hay movimiento hacia arriba
     inc qword[filaObjetivo]
     inc qword[columnaObjetivo]
-
-    ;mostrarString mensajeComisteOcas
-    ;mostrarNumero qword[filaObjetivo]
 
     cmp qword[filaObjetivo], 8
     je zorroNoSePuedeMoverEnDireccion
@@ -823,7 +795,6 @@ verSiZorroPuedeMoverseHaciaDiagonalAbajoDer:
     cmp qword[booleano], 0
     je zorroSePuedeMoverEnDireccion
 
-    ;de nuevo
     inc qword[filaObjetivo]
     inc qword[columnaObjetivo]
 
@@ -839,6 +810,7 @@ verSiZorroPuedeMoverseHaciaDiagonalAbajoDer:
 
     jmp zorroNoSePuedeMoverEnDireccion
 
+;subrutinas de retorno
 zorroSePuedeMoverEnDireccion:
     mov qword[sePuedeMoverZorro], 0
     ret
@@ -849,13 +821,17 @@ zorroNoSePuedeMoverEnDireccion:
 
 moverZorro:
     moverElemento filaZorro, columnaZorro, filaObjetivo, columnaObjetivo; movemos el elemento en el tablero
+    
     ;actualizamos la posicion del zorro por la posicion a la que se acaba de mover
     mov rax, qword[filaObjetivo]
     mov rbx, qword[columnaObjetivo]
     mov qword[filaZorro], rax
     mov qword[columnaZorro], rbx
+
+    ;cambiamos turno
     mov qword[turno], 1
 
+    ;si acaba de comer una oca preguntamos por saltos multiples
     cmp qword[ocaAcabaDeSerComida], 0
     je preguntarSiQuiereMoverDeNuevo 
 
@@ -870,9 +846,8 @@ noMoverseZorro:
     jmp volverAPedirMovimiento
 
 preguntarSiQuiereMoverDeNuevo:
-
-    mov qword[ocaAcabaDeSerComida], 1
-    mov qword[numQueIngreso], 10
+    mov qword[ocaAcabaDeSerComida], 1 ;modificamos variable para reiniciarla
+    mov qword[numQueIngreso], 10 ;limpiamos buffer por si acaso
 
     reiniciarPantalla
     mostrarString mensajeQuiereMoverDeNuevo
@@ -888,22 +863,26 @@ preguntarSiQuiereMoverDeNuevo:
 
     jmp preguntarSiQuiereMoverDeNuevo
 
+;subrutinas de retorno dependiendo la situacion
 noCambiarTurno:
     mov qword[turno], 0
     ret
 cambiarTurno:
     ret
 
-mostrarEstadisticasZorro:
-    mostrarString mensajeMostrarEstadistica                      
-    mostrarNumeroConString mensajecantMovZorroArriba, qword[cantMovZorroArriba]               
-    mostrarNumeroConString mensajecantMovZorroAbajo, qword[cantMovZorroAbajo]          
-    mostrarNumeroConString mensajecantMovZorroDerecha, qword[cantMovZorroDerecha]                 
-    mostrarNumeroConString mensajecantMovZorroIzquierda, qword[cantMovZorroIzquierda]             
-    mostrarNumeroConString mensajecantMovZorroDiagArribaDer, qword[cantMovZorroDiagArribaDer]          
-    mostrarNumeroConString mensajecantMovZorroDiagArribaIzq, qword[cantMovZorroDiagArribaIzq]          
-    mostrarNumeroConString mensajecantMovZorroDiagAbajoIzq, qword[cantMovZorroDiagAbajoDer]            
-    mostrarNumeroConString mensajecantMovZorroDiagAbajoDer, qword[cantMovZorroDiagAbajoIzq]
+hayMovimientoPosibleZorro:
     ret
+
+noHayMovimientoPosibleZorro:
+    mov qword[sePuedeMoverZorro], 1
+    ret
+
+volverAlMenu:
+    ;llamamos al menu incial de nuevo
+
+    sub rsp, 8
+    call menuInicial
+    add rsp, 8
     
+    ret
 

@@ -12,16 +12,52 @@ extern puts
 
 section  .data
     mensajeDireccionesOca         db 10, '« « « Turno Ocas » » »', 10, 'Oca: Seleccione en que dirección moverse', 10, '2: Abajo', 10, '6: Derecha', 10, '4: Izquierda',10,'5: Volver a seleccionar Oca',10, '0: Volver al menu principal', 10, 0
+    mensajeDireccionCeroOca       db 10, '« « « Turno Ocas » » »', 10, 'Oca: Seleccione en que dirección moverse', 10, '2: Abajo', 10, '6: Derecha', 10, '4: Izquierda',10,'5: Volver a seleccionar Oca',10, '0: Volver al menu principal', 10, 0
+    mensajeDireccionUnoOca        db 10, '« « « Turno Ocas » » »', 10, 'Oca: Seleccione en que dirección moverse', 10, '2: Abajo', 10, '6: Derecha', 10, '8: Arriba',10,'5: Volver a seleccionar Oca',10, '0: Volver al menu principal', 10, 0
+    mensajeDireccionDosOca        db 10, '« « « Turno Ocas » » »', 10, 'Oca: Seleccione en que dirección moverse', 10, '8: Arriba', 10,'6: Derecha', 10, '4: Izquierda',10,'5: Volver a seleccionar Oca',10, '0: Volver al menu principal', 10, 0
+    mensajeDireccionTresOca       db 10, '« « « Turno Ocas » » »', 10, 'Oca: Seleccione en que dirección moverse', 10, '2: Abajo', 10, '8: Arriba', 10,  '4: Izquierda',10,'5: Volver a seleccionar Oca',10, '0: Volver al menu principal', 10, 0
     mensajeFilaOca                db 10, '« « « Turno Ocas » » »', 10,'Jugador Ocas: Ingrese la fila de la oca que quiere mover.', 10, 0
     mensajeColumnaOca             db 10, 'Jugador Ocas: Ingrese la columna de la oca que quiere mover.', 10, 0
     mensajeErrorOca               db 10, '¡Ups! !La celda que seleccionaste no contiene una oca! Vuelve a intentarlo.', 10, 0
     mensajeOcaHaSidoMarcada       db 10, 'La oca que seleccionaste aparace marcada como Ø, ahora elige que movimiento deseas hacer.', 10, 0
+    orientacionTablero            dq 0
                                 
 section  .bss
-    filaOcaAMover       resq 1
-    columnaOcaAMover    resq 1
+    filaOcaAMover         resq 1
+    columnaOcaAMover      resq 1
 
 section  .text
+
+mostrarStringOcaSegunDireccion:
+    cmp qword[orientacionTablero], 0
+    je mostrarStringDireccionCero
+
+    cmp qword[orientacionTablero], 1
+    je mostrarStringDireccionUno
+
+    cmp qword[orientacionTablero], 2
+    je mostrarStringDireccionDos
+
+    cmp qword[orientacionTablero], 3
+    je mostrarStringDireccionTres
+
+    ret
+
+mostrarStringDireccionCero:
+    mostrarString mensajeDireccionCeroOca
+    ret
+
+mostrarStringDireccionUno:
+    mostrarString mensajeDireccionUnoOca
+    ret
+
+mostrarStringDireccionDos:
+    mostrarString mensajeDireccionDosOca
+    ret
+
+mostrarStringDireccionTres:
+    mostrarString mensajeDireccionTresOca
+    ret
 
 solicitarAccionOca:
     ;le solicitamos al usuario que oca desea mover
@@ -76,13 +112,19 @@ solicitarOcaAMover:
 
 solicitarMovimientoOca:
 
-    mostrarString mensajeDireccionesOca
+    sub rsp, 8
+    call mostrarStringOcaSegunDireccion
+    add rsp, 8
+    
     ;limpieza de buffer por si acaso
     mov qword[numQueIngreso], 10  
 
     pedirNumeroAlUsuario solicitarMovimientoOca
 
     mov     rax, qword[numQueIngreso]
+
+    cmp     rax, qword[direccionProhibidaOca]
+    je      solicitarMovimientoOca
     
     ;aca preguntamos que tecla valida ingreso y saltamso a la parte correspondiente, si no ingresa nada valido, se vuelve a preguntar
     cmp     rax, qword[teclaMovAbajo]
@@ -93,6 +135,9 @@ solicitarMovimientoOca:
 
     cmp     rax, qword[teclaMovIzq]
     je      movIzqOca
+
+    cmp     rax, qword[teclaMovArriba]
+    je      movArribaOca
 
     cmp     rax, qword[teclaVolverASeleccionarOca]
     je      volverASeleccionarOca  
@@ -177,6 +222,20 @@ movIzqOca:
 
     jmp noMoverseOca
 
+movArribaOca:
+    dec qword[filaObjetivo]
+
+    cmp qword[filaObjetivo], 0
+    je  noMoverseOca
+
+    sub     rsp, 8
+    call    verSiEstaVacio
+    add     rsp ,8
+
+    cmp qword[booleano], 0
+    je  moverOca
+
+    jmp noMoverseOca
 
 moverOca:
     moverElemento filaOcaAMover, columnaOcaAMover, filaObjetivo, columnaObjetivo; movemos el elemento en el tablero
@@ -187,23 +246,13 @@ moverOca:
     jmp volverAPedirMovimiento
 
 OcaNoCorrecta:
-;mostramos mensaje de oca no correcta y volvemos a pedirla
+    ;mostramos mensaje de oca no correcta y volvemos a pedirla
     mostrarString mensajeErrorOca
     jmp solicitarOcaAMover
 
 
 validarQueHayaOca:
-    mov     rax, [filaOcaAMover]    ; Cargar fila actual en rax
-    mov     rcx, qword[longFila]   ; Cargar longitud de la fila
-    dec     rax                    ; Convertir a índice base 0
-    imul    rax, rcx               ; rax = fila * longFila
-
-    mov     rbx, [columnaOcaAMover]              ; Cargar columna actual en rbx
-    mov     r8, qword[longElemento]; Cargar longitud del elemento
-    dec     rbx                    ; Convertir a índice base 0
-    imul    rbx, r8                ; rbx = columna * longElemento
-
-    add     rax, rbx               ; rax = rax + rbx, posición total en el tablero
+    calcularDesplazamineto filaOcaAMover, columnaOcaAMover
 
     mov     qword[booleano], 1
 
@@ -216,7 +265,7 @@ solicitarFilaOcaAMover:
 
     mostrarString mensajeFilaOca
 
-    mov qword[numQueIngreso], 10 
+    mov qword[numQueIngreso], 10 ;limpiamos buffer por si acaso
 
     ;Pido al usuario un numero
     pedirNumeroAlUsuario solicitarFilaOcaAMover
@@ -228,6 +277,7 @@ solicitarFilaOcaAMover:
     cmp     qword[numQueIngreso], 8
     jge     solicitarFilaOcaAMover
 
+    ;reemplazamos el numero que ingreso en la variable
     mov     rax, qword[numQueIngreso]
     mov     qword[filaOcaAMover], rax
 
@@ -248,6 +298,7 @@ solicitarColumnaOcaAMover:
     cmp     qword[numQueIngreso], 8
     jge     solicitarColumnaOcaAMover
 
+    ;reemplazamos el numero que ingreso en la variable
     mov     rax, qword[numQueIngreso]
     mov    qword[columnaOcaAMover], rax
 

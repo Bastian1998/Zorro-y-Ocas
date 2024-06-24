@@ -1,21 +1,25 @@
 extern  printf
 extern puts
 
-;macro que recibe un entero y lo muestra por pantalla
+;macro que recibe un entero y un string (que contiene una variable) y lo muestra por pantalla
 %macro mostrarNumeroConString 2
     mov rdi, %1 ;cargo el string
     mov rsi, %2 ;cargo el numero
+
     sub rsp,8 
     call printf
     add rsp,8
+
 %endmacro
 
 ;macro que recibe un string y lo muestra por pantalla
 %macro mostrarString 1
     mov rdi, %1 ;cargo el string
+
     sub rsp,8 
     call printf
     add rsp,8
+    
 %endmacro
 
 ;macro que recibe un entero y lo muestra por pantalla
@@ -48,10 +52,11 @@ extern puts
 
     imul rdx, 2; multiplico por 2 (lo que pesa cada string, 2 bytes)
 
+    ;esto es un truquito para que depende del elemento en la matriz muestra un string u otro (estos estan en la memoria de forma contigua)
     lea rdx , qword[simboloCeldaInvalida + rdx]; copio la direccion de memoria del string correspondiente dependiendo de el elemento 
     mostrarString rdx ; Mostrar el número
 
-    mostrarString simboloEspacio ;muestro un espacio en blanco para hacer mas clean el tablero
+    mostrarString simboloEspacio ;muestro un espacio en blanco para hacer mas ligero visualmente el tablero
 
 %endmacro
 
@@ -79,7 +84,7 @@ section  .data
     pared                       db '║', 0
     techo                       db '  ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╗', 10, 0
     piso                        db '  ╚═══╩═══╩═══╩═══╩═══╩═══╩═══╝', 10, 0
-    intermedio                  db '  ╠═══╬═══╬═══╬═══╬═══╬═══╬═══╣', 10, 0
+    pisoIntermedio              db '  ╠═══╬═══╬═══╬═══╬═══╬═══╬═══╣', 10, 0
     columnasString              db '    1   2   3   4   5   6   7', 10, 0
     mensajeCantidadOcasComidas  db 10, 'Cantidad de ocas comidas por el zorro: %li', 10, 0
     mensajeCuantasOcasFaltan    db 10, 'Al zorro le falta comer %li ocas para ganar.', 10, 0
@@ -93,24 +98,27 @@ section  .text
 
 mostrarMatriz:
     limpiarPantalla
-    mostrarString columnasString; mostramos columnas
-    mostrarString techo; mostramos el techo del tablero
-    
-    sub rsp, 8
-    call recorrerMatriz
-    add rsp, 8
+    mostrarString columnasString; mostramos los numeros de las columnas
 
+    mostrarString techo; mostramos el techo del tablero
+    sub rsp, 8
+    call recorrerMatriz ;mostramos matriz
+    add rsp, 8
     mostrarString piso; mostramos el piso del tablero
-    mostrarNumeroConString mensajeCantidadOcasComidas, qword[ocasComidas]
+
+    mostrarNumeroConString mensajeCantidadOcasComidas, qword[ocasComidas]; mostramos cantidad ocas comidas
+
     mov rax, 12
     sub rax, qword[ocasComidas]
-    mostrarNumeroConString mensajeCuantasOcasFaltan, rax 
+    mostrarNumeroConString mensajeCuantasOcasFaltan, rax ; mostramos cuantas ocas faltan por comer para que el zorro gane
+
     ret
 
 recorrerMatriz:
     mov qword[filaActual], 1 ;la fila actual comienza en 1 antes de mostrar la matriz
     mov qword[columnaActual], 1 ;la columna actual comienza en 1 antes de mostrar la matriz
     mostrarNumero [filaActual]
+
     jmp recorrerFilas ;vamos a recorrer las filas
 
 recorrerFilas:
@@ -119,8 +127,10 @@ recorrerFilas:
     mostrarElemento filaActual, columnaActual; mostramos el elemento i,j
 
     inc qword[columnaActual]; incrementamos en 1 la columna
+
     cmp qword[columnaActual], 8
     je siguienteFila ; si la columna es <7
+
     jmp recorrerFilas; saltamos a la siguiente fila
 
 siguienteFila:
@@ -128,11 +138,26 @@ siguienteFila:
     mostrarString saltoDeLinea; saltamos de linea
     mov qword[columnaActual], 1; reiniciamos columnas
     add qword[filaActual], 1; aumentamos en uno la fila
+
     cmp qword[filaActual], 8
     je finLoop; si fila > 7, damos por finalizada la matriz
-    mostrarString intermedio
+
+    mostrarString pisoIntermedio
     mostrarNumero [filaActual]
+
     jmp recorrerFilas; volvemos a mostrar otra fila
+
+mostrarEstadisticasZorro:
+    mostrarString mensajeMostrarEstadistica                      
+    mostrarNumeroConString mensajecantMovZorroArriba, qword[cantMovZorroArriba]               
+    mostrarNumeroConString mensajecantMovZorroAbajo, qword[cantMovZorroAbajo]          
+    mostrarNumeroConString mensajecantMovZorroDerecha, qword[cantMovZorroDerecha]                 
+    mostrarNumeroConString mensajecantMovZorroIzquierda, qword[cantMovZorroIzquierda]             
+    mostrarNumeroConString mensajecantMovZorroDiagArribaDer, qword[cantMovZorroDiagArribaDer]          
+    mostrarNumeroConString mensajecantMovZorroDiagArribaIzq, qword[cantMovZorroDiagArribaIzq]          
+    mostrarNumeroConString mensajecantMovZorroDiagAbajoIzq, qword[cantMovZorroDiagAbajoDer]            
+    mostrarNumeroConString mensajecantMovZorroDiagAbajoDer, qword[cantMovZorroDiagAbajoIzq]
+    ret
 
 finLoop:
     ;terminamos de mostrar la matriz

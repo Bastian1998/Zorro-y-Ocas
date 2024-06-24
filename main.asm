@@ -6,6 +6,7 @@ global  main
 %include 'mensajesGrandes.asm'
 %include 'cambiarOrientacion.asm'
 %include 'personalizarSimbolos.asm'
+
 extern  gets
 extern  sscanf      
 extern system  
@@ -28,19 +29,18 @@ section  .data
                                                     dq	0,0,1,1,1,0,0
 
 section  .bss
-        
 section  .text
 main:
 
     sub rsp, 8
-    call menu 
+    call menu  ;llamada a menu inicial
     add rsp, 8
 
-    cmp qword[fin], 0
-    je pausaElJuego
+    cmp qword[fin], 0 ;pregunta si el usuario elijio salir desde 
+    je pausaElJuego 
 
     sub rsp, 8
-    call jugar 
+    call jugar; entrada al juego
     add rsp, 8
 
     ret
@@ -53,7 +53,7 @@ jugar:
     add rsp, 8
 
     sub rsp, 8
-    call guardarArchivo; se guarda automaticamente todo el tiempo
+    call guardarArchivo; se guarda automaticamente todo el tiempo el juego, asi si hay alguna interrupcion del juego, no se pierde todo
     add rsp, 8
 
     cmp qword[fin], 0 ;termino el juego porque lo pausaron
@@ -71,27 +71,29 @@ jugar:
 
 
 verSiTerminoElJuego:
-   
+    ;analizo todas las situaciones que podrian dar por terminada el juego
+
     cmp qword[ocasComidas], 12
-    je  finalizarJuegoPorOcasComidas
+    je  finalizarJuegoPorOcasComidas ;finalizo el juego si el zorro comio 12 ocas
 
     sub rsp, 8
-    call verSiZorroTieneMovimientoPosibles ;solicitio un movimiento ya sea al Zorro o a las Ocas
+    call verSiZorroTieneMovimientoPosibles ;verifico si el zorro tiene algun movimiento posible
     add rsp, 8
 
     cmp qword[sePuedeMoverZorro], 1
-    je finalizarPorZorroEncerrado
+    je finalizarPorZorroEncerrado ; si la variable es 1(Falso), finalizo el juego por estar el zorro encerrado
     
     ret
 
 finalizarJuegoPorOcasComidas:
-    mov qword[fin], 0
-    mostrarString mensajeJuegoTerminadoPorOCas
+    mov qword[fin], 0; cambio a 0 (True) la variable que representa la finalizacion del juego
+    reiniciarPantalla 
+    mostrarString mensajeJuegoTerminadoPorOCas; 
     ret
 
 finalizarPorZorroEncerrado:
-    mov qword[fin], 0
-    reiniciarPantalla
+    mov qword[fin], 0 ;cambio a 0 (True) la variable que representa la finalizacion del juego
+    reiniciarPantalla 
     mostrarString mensajeJuegoTerminadoPorZorroEncerrado
     ret
 
@@ -100,23 +102,24 @@ pausaElJuego:
     reinicarPantalla
     mostrarString mensajeFin
     mostrarString mensajePorAhora
+
     sub rsp, 8
-    call mostrarEstadisticasZorro
+    call mostrarEstadisticasZorro; muestro estadisticas actuales del juego
     add rsp, 8
-    ;terminar el juego
+
+    ;pausar el juego
     ret
 
 finDelJuego:
+    ;finalizacion de la partida, muestra las estadisticas finales y elimina el archivo, asi no hay punto de carga
     mostrarString mensajeGameOver
     sub rsp, 8
-    call mostrarEstadisticasZorro
+    call mostrarEstadisticasZorro; muestro estadisticas final del juego
     add rsp, 8
+
     mov rdi, fileName
-
     sub rsp, 8
-    call unlink
+    call unlink; elimino archivo
     add rsp, 8
-
-    ;eliminarArchivo
-    ;terminar el juego
+    ;finalizo el juego
     ret
