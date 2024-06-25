@@ -1,7 +1,15 @@
 extern puts
+
+;macro que mueve el contenido de una posicion de memoria a otra
+%macro moverElemento 2
+    ;%1origen %2destino
+    mov rax, qword[%1]
+    mov [%2], rax
+%endmacro
+
 section  .data
-    mensajeMenuCambioOrientacion db 10,10,'Presione la opcion deseada: ',10,10, '1. Girar tablero 90 (anti horario)°', 10,10,'2. Salir',10,10,0
-    rangoMatriz                  dq 6        ; rango ajustado de la matriz cuando i y j empiezan en 0
+    mensajeMenuCambioOrientacion db 10, 10, 'Presione la opcion deseada: ',10,10, '1. Girar tablero 90 (anti horario)°', 10,10,'2. Salir',10,10,0
+    rangoMatriz                  dq 6       ;rango ajustado de la matriz cuando i y j empiezan en 0
     direccionProhibidaOca        dq 8
         
 section  .bss
@@ -14,7 +22,7 @@ section  .text
 
 cambiarOrientacion:
 
-    mov qword[numQueIngreso], 10
+    mov qword[numQueIngreso], 10; limpio buffer por si acaso
 
     reiniciarPantalla
     mostrarString mensajeMenuCambioOrientacion
@@ -86,7 +94,7 @@ bucleExteriorIntercambiar:
 
     cmp rcx, 7
     je finIntercambioBucle       ; Si j > 7 termina el bucle
-    mov rbx, 0       ; Reiniciar i = 0
+    mov rbx, 0                   ; Reiniciar i = 0
     
 bucleInteriorIntercambiar:
 
@@ -118,7 +126,7 @@ bucleInteriorIntercambiar:
     mov qword[tablero + rdx], r9    ; Almacenar elemento en tablero [6 - j][i]
     
     sub rsp, 8
-    call verNuevaPosicionZorro
+    call verNuevaPosicionZorro ;vemos si el elemento es el Zorro, para asi actualizar su nueva posicion
     add rsp, 8
 
     inc rbx          ; i += 1
@@ -135,11 +143,11 @@ finIntercambioBucle:
 verNuevaPosicionZorro:
 
     cmp r9, 2
-    je actualizarPosicionZorro
+    je actualizarPosicionZorro ;si el elemento es 2(Zorro), actualizamos los valores
 
     ret
 actualizarPosicionZorro:
-    ;mostrarNumero qword[aux]
+    ; esta subrutina actualiza los valores de la fila y la columna del zorro (se le suma 1 porque en esta logica las columnas y filas van de 0 a 6 y en la otra de 1 a 7)
     mov rax, qword[filaAux]
     mov r11, qword[columAux]
 
@@ -152,6 +160,11 @@ actualizarPosicionZorro:
 
 actualizarMovimientosOcas:
 
+    sub rsp, 8
+    call actualizarEstadisticasRotacion ;si se roto la matriz, se rotan las estadisticas
+    add rsp, 8
+    
+    ;actualizamos la direccion prohibida de la oca
     cmp qword[orientacionTablero], 0
     je actualizarMovOcasDireccionCero
 
@@ -166,26 +179,40 @@ actualizarMovimientosOcas:
 
     ret
 
+;actualizamos en cada subrutina la nueva direccion prohibida
 actualizarMovOcasDireccionCero:
     mov rax, 8
     mov qword[direccionProhibidaOca], rax
-    ;actualizar stats
     ret
 
 actualizarMovOcasDireccionUno:
     mov rax, 4
     mov qword[direccionProhibidaOca], rax
-    ;actualizar stats
     ret
 
 actualizarMovOcasDireccionDos:
     mov rax, 2
     mov qword[direccionProhibidaOca], rax
-    ;actualizar stats
     ret
 
 actualizarMovOcasDireccionTres:
     mov rax, 6
     mov qword[direccionProhibidaOca], rax
-    ;actualizar stats
     ret
+
+;rotamos las estadisticas 90 grados.
+actualizarEstadisticasRotacion:
+    moverElemento cantMovZorroAbajo, aux
+    moverElemento cantMovZorroIzquierda, cantMovZorroAbajo
+    moverElemento cantMovZorroArriba, cantMovZorroIzquierda
+    moverElemento cantMovZorroDerecha, cantMovZorroArriba
+    moverElemento aux, cantMovZorroDerecha
+
+    moverElemento cantMovZorroDiagArribaDer, aux 
+    moverElemento cantMovZorroDiagAbajoDer, cantMovZorroDiagArribaDer
+    moverElemento cantMovZorroDiagAbajoIzq, cantMovZorroDiagAbajoDer
+    moverElemento cantMovZorroDiagArribaIzq, cantMovZorroDiagAbajoIzq
+    moverElemento aux, cantMovZorroDiagArribaIzq
+
+    ret
+
