@@ -24,7 +24,7 @@ extern puts
 
 ;macro que recibe un entero y lo muestra por pantalla
 %macro mostrarNumero 1
-    mov rdi, numeroString ;cargo el string
+    mov rdi, numeroString ; cargo el string
     mov rsi, %1
     sub rsp,8 
     call printf
