@@ -29,6 +29,7 @@ section  .bss
 section  .text
 
 mostrarStringOcaSegunDireccion:
+    ;mostramos un string distinto dependiendo la orientaciondel tablero (cambia los movimientos permitidos)
     cmp qword[orientacionTablero], 0
     je mostrarStringDireccionCero
 
@@ -75,9 +76,6 @@ solicitarAccionOca:
     sub  rsp, 8
     call solicitarMovimientoOca
     add  rsp, 8
-
-    ;cambiamos turno al Zorro
-    mov    qword[turno], 0
 
     ret
 

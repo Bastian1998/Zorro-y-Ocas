@@ -81,14 +81,18 @@ section  .data
     simboloOcaSeleccionada    db 'Ø', 0
 
     ;simbolos auxiliares para dibujar el tablero
-    pared                       db '║', 0
-    techo                       db '  ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╗', 10, 0
-    piso                        db '  ╚═══╩═══╩═══╩═══╩═══╩═══╩═══╝', 10, 0
-    pisoIntermedio              db '  ╠═══╬═══╬═══╬═══╬═══╬═══╬═══╣', 10, 0
-    columnasString              db '    1   2   3   4   5   6   7', 10, 0
-    mensajeCantidadOcasComidas  db 10, 'Cantidad de ocas comidas por el zorro: %li', 10, 0
-    mensajeCuantasOcasFaltan    db 10, 'Al zorro le falta comer %li ocas para ganar.', 10, 0
-    saltoDeLinea                db 10, 0
+    pared                                   db '║', 0
+    techo                                   db '  ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╗', 10, 0
+    piso                                    db '  ╚═══╩═══╩═══╩═══╩═══╩═══╩═══╝', 10, 0
+    pisoIntermedio                          db '  ╠═══╬═══╬═══╬═══╬═══╬═══╬═══╣', 10, 0
+    columnasString                          db '    1   2   3   4   5   6   7', 10, 0
+    mensajeCantidadOcasComidas              db 10, 'Cantidad de ocas comidas por el zorro: %li', 10, 0
+    mensajeCuantasOcasFaltan                db 10, 'Al zorro le falta comer %li ocas para ganar.', 10, 0
+    saltoDeLinea                            db 10, 0
+    direccionProhibidaOcaOrientacionCero    db 10, 'Direccion Prohibida Oca: ↑', 10, 0
+    direccionProhibidaOcaOrientacionUno    db 10, 'Direccion Prohibida Oca: ←' ,10, 0
+    direccionProhibidaOcaOrientacionDos    db 10, 'Direccion Prohibida Oca: ↓' ,10, 0
+    direccionProhibidaOcaOrientacionTres    db 10, 'Direccion Prohibida Oca: →', 10, 0 
 
                                    
 section  .bss
@@ -105,6 +109,10 @@ mostrarMatriz:
     call recorrerMatriz ;mostramos matriz
     add rsp, 8
     mostrarString piso; mostramos el piso del tablero
+
+    sub rsp, 8
+    call mostrarDireccionProhibidaOca ;mostrar que direccion tiene prohibida las ocas para claridad para el jugador
+    add rsp, 8
 
     mostrarNumeroConString mensajeCantidadOcasComidas, qword[ocasComidas]; mostramos cantidad ocas comidas
 
@@ -157,6 +165,38 @@ mostrarEstadisticasZorro:
     mostrarNumeroConString mensajecantMovZorroDiagArribaIzq, qword[cantMovZorroDiagArribaIzq]          
     mostrarNumeroConString mensajecantMovZorroDiagAbajoIzq, qword[cantMovZorroDiagAbajoDer]            
     mostrarNumeroConString mensajecantMovZorroDiagAbajoDer, qword[cantMovZorroDiagAbajoIzq]
+    ret
+
+mostrarDireccionProhibidaOca:
+    ;mostramos un string distinto dependiendo de la orientacion que tiene el tablero
+    mov rax, qword[direccionProhibidaOca]
+
+    cmp rax, 8
+    je  mostrarDireccionProhibidaOrientacionCero
+
+    cmp rax, 4 
+    je  mostrarDireccionProhibidaOrientacionUno
+
+    cmp rax, 2
+    je  mostrarDireccionProhibidaOrientacionDos
+
+    cmp rax, 6
+    je  mostrarDireccionProhibidaOrientacionTres
+
+    ret
+
+mostrarDireccionProhibidaOrientacionCero:
+    mostrarString direccionProhibidaOcaOrientacionCero
+    ret
+mostrarDireccionProhibidaOrientacionUno:
+    mostrarString direccionProhibidaOcaOrientacionUno
+    ret
+mostrarDireccionProhibidaOrientacionDos:
+    mostrarString direccionProhibidaOcaOrientacionDos
+    ret
+
+mostrarDireccionProhibidaOrientacionTres:
+    mostrarString direccionProhibidaOcaOrientacionTres
     ret
 
 finLoop:

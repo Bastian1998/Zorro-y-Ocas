@@ -831,6 +831,10 @@ moverZorro:
     ;cambiamos turno
     mov qword[turno], 1
 
+    
+    cmp qword[ocasComidas], 12
+    je  volverAPedirMovimiento; si ya comio 12, no hace falta preguntar si quiere comer de nuevo
+    
     ;si acaba de comer una oca preguntamos por saltos multiples
     cmp qword[ocaAcabaDeSerComida], 0
     je preguntarSiQuiereMoverDeNuevo 
