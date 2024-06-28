@@ -179,7 +179,7 @@ actualizarMovimientosOcas:
 
     ret
 
-;actualizamos en cada subrutina la nueva direccion prohibida
+;actualizamos en cada subrutina la nueva dirección prohibida
 actualizarMovOcasDireccionCero:
     mov rax, 8
     mov qword[direccionProhibidaOca], rax
