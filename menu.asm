@@ -26,7 +26,7 @@ menuInicial:
     mostrarString mensajeMenu
     mostrarString mensajeMenuInicial
 
-    mov qword[numQueIngreso], 10; cargamos un numero invalido antes de preguntar asi nunca hay errores por si hay algo cargado erroneo
+    mov qword[numQueIngreso], 10; cargamos un numero invalido antes de preguntar, asi nunca hay errores por si hay algo cargado erroneo
 
     pedirNumeroAlUsuario menuInicial
     
