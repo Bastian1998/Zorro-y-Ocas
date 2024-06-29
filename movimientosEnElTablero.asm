@@ -24,7 +24,7 @@ section  .data
     filaObjetivo            dq   5 ;fila a la que se quiere mover ya seal el zorro o las ocas
     columnaObjetivo         dq   4 ;columna a la que se quiere mover ya sea el zorro o las ocas
     numFormat               db  '%li', 0  ; %i 32 bits / %li 64 bits
-    mensajeFin              db   10, 10, '¡Haz decidio finalizar el juego en este estado! Es una pena.... Por suerte tu partida ha sido guardada automaticamente. Cuando vuelvas a ingresar al juego puedes continuar..', 10, 0; %i 32 bits / %li 64 bits
+    mensajeFin              db   10, 10, '¡Haz decidio finalizar el juego en este estado! Es una pena.... Por suerte tu partida ha sido guardada automaticamente. Cuando vuelvas a ingresar al juego puedes continuar..', 10, 0;
        
 section  .bss
     aux                 resq 1
@@ -56,7 +56,7 @@ volverAPedirMovimiento:
     ret
 
 finalizarJuego:
-    ;limpiamos pantalla, mostramos ultimo estado actual y le avisamos al usuario que el juego terminó
+    ;limpiamos pantalla, mostramos ultimo estado actual y modificamos el booleano
     reiniciarPantalla
     mov qword[fin], 0
     ret
