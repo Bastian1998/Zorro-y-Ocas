@@ -10,3 +10,9 @@ Aclaraciones de interpretación del enunciado:
 - Las ocas no pueden moverse hacia atras (lo que seria hacia arriba en la perspectiva inicial), y varia segun la perspectiva que movimiento tienen prohibido.
 
 - hay varias subrutinas que solo tienen RET pero se llaman distinto. Es para legibilidad y claridad del codigo. Se llaman dependiendo de la intencion que tenga ese return. Sobre todo en las partes del codigo donde se salta o no a subrutinas segun lo que ingreso el usuario.
+
+Pasos para compilar proyecto:
+- nasm main.asm -f elf64
+- gcc main.o -o main.out -no-pie
+- ./main.out
+
